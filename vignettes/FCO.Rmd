@@ -53,14 +53,7 @@ As a side note of transforming the previous tool into a package, flexible cutoff
 
 ## Installation
 
-As usual, the package is available on CRAN and can be installed easily:
-
-```{r install}
-#install.packages("FCO")
-#Add later when published on CRAN
-```
-
-Then, the package can be loaded, for example with (required packages, if installed, will be loaded automatically):
+FCO is available on CRAN and can be installed as usual via `install.packages`. Then, the package can be loaded, for example with (required packages, if installed, will be loaded automatically):
 
 ```{r setup}
 library(FCO)
@@ -142,6 +135,15 @@ When the type is "NM", all loadings (default: .7) and correlations (default: .3)
 pop_mod(mod, x = bb1992, type = "NM", afl = .9)$pop.mod
 pop_mod(mod, x = bb1992, type = "NM", aco = .5)$pop.mod
 pop_mod(mod, x = bb1992, type = "EM", standardized = FALSE)$pop.mod
+```
+
+## Alternative specification via population model and sample size
+
+As an alternative to provide a model and data, it is possible to specify a population model and the sample size of your data instead. This might be useful for simulation approaches where the population model is provided. Hence, for example, the generated population model can be used:
+
+```{r alternative specification via pop.mod1 and n}
+pop.mod <- pop_mod(mod, x = bb1992)$pop.mod
+fits.altern <- gen_fit(pop.mod1 = pop.mod, n = 502, rep = 10)
 ```
 
 ## Assumptions from data
@@ -366,7 +368,7 @@ The function returns the cutoffs for different levels of alpha and the two model
 
 # References
 
-Babakus, E., & Boller, G. W. (1992). An empirical assessment of the SERVQUAL scale. Journal of Business Research, 24(3), 253--268. <https://doi.org/10.1016/0148-2963(92)90022-4>
+Babakus, E., & Boller, G. W. (1992). An empirical assessment of the SERVQUAL scale. Journal of Business Research, 24(3), 253--268. [https://doi.org/10.1016/0148-2963(92)90022-4](https://doi.org/10.1016/0148-2963(92)90022-4){.uri}
 
 Hu, L., & Bentler, P. M. (1999). Cutoff criteria for fit indexes in covariance structure analysis: Conventional criteria versus new alternatives. Structural Equation Modeling, 6(1), 1--55. <https://doi.org/10.1080/10705519909540118>
 
@@ -378,4 +380,4 @@ Niemand, T., & Mai, R. (2018). Flexible cutoff values for fit indices in the eva
 
 Rönkkö, M., & Cho, E. (2020). An updated guideline for assessing discriminant validity. Organizational Research Methods. <https://doi.org/10.1177/1094428120968614>\
 
-Comment: V18012022
+Comment: V12042022

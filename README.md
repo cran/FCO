@@ -5,12 +5,22 @@
 
 ## Changes in FCO
 
+### FCO 0.8.0
+
+-   Changed vignette after release on CRAN
+-   Fixed issue in index_guess
+-   Allows to specify sample size n instead of dataset x
+
+------------------------------------------------------------------------
+
+### FCO 0.7.2
+
+-   New seed argument in gen_fit for reproducible cutoffs
+
 ### FCO 0.7.1
 
 -   Added a `NEWS.md` file to track changes to the package.
 -   Minor revisions to tests
-
-------------------------------------------------------------------------
 
 ### FCO 0.7.0
 
@@ -47,12 +57,12 @@ model better than another?) are provided in an exploratory manner.
 
 ## Installation
 
-You can install the development version of FCO from
-[GitHub](https://github.com/) with:
+You can install the FCO from CRAN [CRAN](https://cran.r-project.org)
+with:
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("ThomasNiemand/FCO")
+install.packages("FCO")
+library(FCO)
 ```
 
 ## Example
@@ -63,7 +73,7 @@ a single model:
 ``` r
 library(FCO)
 library(lavaan)
-#> This is lavaan 0.6-9
+#> This is lavaan 0.6-11
 #> lavaan is FREE software! Please report any bugs.
 #Data from bb1992
 mod <- "
@@ -80,8 +90,8 @@ flex_co(fits = fits.single, index = c("CFI", "SRMR"))
 #> Warning in flex_co(fits = fits.single, index = c("CFI", "SRMR")): The number of
 #> replications is lower than the recommended minimum of 500. Consider with care.
 #> $cutoff
-#>       CFI      SRMR 
-#> 0.9691953 0.0356855 
+#>        CFI       SRMR 
+#> 0.97826871 0.03659316 
 #> 
 #> $index
 #> [1] "CFI"  "SRMR"
@@ -112,10 +122,10 @@ recommend(fits.single)
 #> 
 #> $cutoffs
 #>               SRMR
-#> cutoff 0.001 0.036
-#> cutoff 0.01  0.036
-#> cutoff 0.05  0.036
-#> cutoff 0.1   0.035
+#> cutoff 0.001 0.037
+#> cutoff 0.01  0.037
+#> cutoff 0.05  0.037
+#> cutoff 0.1   0.036
 #> 
 #> $decisions
 #>                  SRMR

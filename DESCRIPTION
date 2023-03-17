@@ -1,7 +1,8 @@
 Package: FCO
 Title: Flexible Cutoffs for Model Fit Evaluation in Covariance-Based
         Structural Models
-Version: 0.7.2
+Version: 0.8.0
+Depends: R (>= 3.5.0)
 Authors@R: 
     c(person(given = "Thomas",
            family = "Niemand",
@@ -17,16 +18,15 @@ Description: A toolbox to derive flexible cutoffs for fit indices in 'Covariance
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.3
 Imports: lavaan, semTools, parallel, checkmate, data.table
-Suggests: rmarkdown, knitr, ggplot2, MASS, testthat (>= 3.0.0)
+Suggests: rmarkdown, knitr, ggplot2, MASS, testthat
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Author: Thomas Niemand [aut, cre] (<https://orcid.org/0000-0001-7677-1168>),
   Robert Mai [ctb] (<https://orcid.org/0000-0002-8364-9328>)
 Maintainer: Thomas Niemand <thomas.niemand@gmail.com>
 NeedsCompilation: no
-Packaged: 2022-02-11 12:47:29 UTC; thomasniemand
-Depends: R (>= 3.5.0)
+Packaged: 2023-03-09 15:55:08 UTC; thomasniemand
 Repository: CRAN
-Date/Publication: 2022-02-11 19:20:07 UTC
+Date/Publication: 2023-03-17 11:30:15 UTC

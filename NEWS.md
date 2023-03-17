@@ -1,8 +1,14 @@
+# FCO 0.8.0
+
+* Changed vignette after release on CRAN
+* Fixed issue in index_guess
+* Allows to specify sample size n instead of dataset x
+
+------------------------------------------------------------------------
+
 # FCO 0.7.2
 
 * New seed argument in gen_fit for reproducible cutoffs
-
-------------------------------------------------------------------------
 
 # FCO 0.7.1
 

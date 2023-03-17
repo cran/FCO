@@ -5,9 +5,10 @@
 \title{Obtain fit statistics from one or two models}
 \usage{
 gen_fit(
-  mod1,
+  mod1 = NULL,
   mod2 = NULL,
-  x,
+  x = NULL,
+  n = NULL,
   rep = 500,
   type = "NM",
   dv = FALSE,
@@ -29,6 +30,8 @@ gen_fit(
 \item{mod2}{Another lavaan model for a model comparison. If missing and merge.mod = TRUE, a merged model from function merge_factors is estimated based on mod1.}
 
 \item{x}{A dataset for the model of nrow observations (minimum: 50) and ncol indicators (minimum: 4)}
+
+\item{n}{A sample size specified instead of a dataset (minimum: 50, maximum: 50000). Requires a population model via pop.mod1.}
 
 \item{rep}{Number of replications to be simulated (default: 500, minimum: 10, maximum: 5000)}
 
@@ -61,7 +64,7 @@ If TRUE (the default), mclapply (on Linux or Mac machines) or parLapply (on Wind
 
 \item{seed}{The seed to be set to obtain reproducible cutoffs (default: 1111). Defines a vector of length rep with the seed being the first value.}
 
-\item{pop.mod1}{For flexibility reasons, an optional lavaan population model can be provided.}
+\item{pop.mod1}{For flexibility reasons, an optional lavaan population model can be provided. This is required together with n if x is missing.}
 
 \item{pop.mod2}{Another optional lavaan population model.}
 }
