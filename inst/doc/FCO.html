@@ -48,6 +48,7 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
 pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
@@ -340,13 +341,26 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
+<pre><code>## Loading required package: lavaan</code></pre>
+<pre><code>## This is lavaan 0.6-19
+## lavaan is FREE software! Please report any bugs.</code></pre>
+<pre><code>## Loading required package: FCO</code></pre>
+<pre><code>## Loading required package: dplyr</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
 <div id="overview" class="section level1">
 <h1>Overview</h1>
 <div id="motivation" class="section level2">
 <h2>Motivation</h2>
 <p>This package allows users to derive flexible cutoffs for the
-evaluation of absolute model fit in Covariance-Based Structural Equation
-Modeling (CBSEM).</p>
+evaluation of absolute and relative model fit in Covariance-Based
+Structural Equation Modeling (CBSEM).</p>
 <p>For CBSEM, a multitude of fit indices have been proposed, roughly
 classified as Goodness-of-Fit (GoF), such as CFI (Comparative Fit
 Index), or Badness-of-Fit (BoF), including SRMR (Standardized Root Mean
@@ -374,14 +388,16 @@ depending on the model and its characteristics.</p>
 correctly specified Confirmatory Factor Analysis (CFA) models for a wide
 range of latent variables (or factors), indicators per latent variable,
 sample sizes, factor loadings, and normal as well as non-normal data.
-Flexible cutoffs can be understood as the empirical quantile of a given
-index for a predefined uncertainty. If an uncertainty of 5 percent (or
-.05) is accepted a-priori, the 5 percent quantile of the simulated
-distribution for correctly specified CFA models, with the given model
-and sample characteristics, will determine the flexible cutoff.
-Depending on the nature of the underlying fit index, the appropriate
-lower (GoF) or upper (BoF) width of the respective confidence interval,
-as defined by the quantile, is used to derive the flexible cutoff.</p>
+Starting with version 2, some types of SEM are also possible (see
+Details). Flexible cutoffs can be understood as the empirical quantile
+of a given index for a predefined uncertainty. If an uncertainty of 5
+percent (or .05) is accepted a-priori, the 5 percent quantile of the
+simulated distribution for correctly specified CFA models, with the
+given model and sample characteristics, will determine the flexible
+cutoff. Depending on the nature of the underlying fit index, the
+appropriate lower (GoF) or upper (BoF) width of the respective
+confidence interval, as defined by the quantile, is used to derive the
+flexible cutoff.</p>
 <p>Thereby, flexible cutoffs are also flexible in the recommendations
 they provide. If users are more uncertain about their model, they can
 adjust the uncertainty to 10 percent (or .10). When being more certain
@@ -394,518 +410,427 @@ very lenient cutoffs.</p>
 “Flexible Cutoff Values for Fit Indices in the Evaluation of Structural
 Equation Models” (Niemand and Mai, 2018).</p>
 </div>
-<div id="package-and-tool" class="section level2">
-<h2>Package and tool</h2>
-<p>From 2018 to 2021, we provided a website-based tool on
-flexiblecutoffs.org that allowed users to input certain parameters and
-obtain the respective flexible cutoffs from pre-run simulations. Given
-the limitations of this approach (parameters to be simulated are finite)
-and user feedback, we decided to deprecate the tool on the website and
-instead offer this package FCO. We believe that this provides multiple
-advantages for users, particularly:</p>
+<div id="version-2.0" class="section level2">
+<h2>Version 2.0</h2>
+<p>Originally proposed by Niemand &amp; Mai (2018), flexible cutoffs
+(hereafter FCO1) have been developed with only a correct model in mind.
+This simple, first approach of simulated cutoffs for fit indices hence
+cannot consider misspecified models under consideration. To improve on
+this, multiple decision rules are introduced that – based on a
+misspecified model – allow to determine the Type II error of misfit for
+a given cutoff and fit indicator. With this feature in mind, this
+enables different decision rules (i.e., what type of error is considered
+and how) based on pertinent literature:</p>
 <ul>
-<li><p>Empirical: Using lavaan to define and estimate the users’ own
-model. Hence, parameters such as the number of latent variables and
-sample size are not required to be specified, but are taken from the
-lavaan model.</p></li>
-<li><p>More flexibility: A myriad of new functions and arguments are
-available to assist the user and provide more options to individualize
-the flexible cutoffs to a given model. For example, relative cutoffs can
-be derived for two models to be compared (e.g., nested models). Users
-can choose from different types of settings for the underlying
-population model (including empirical relationships). Finally,
-discriminant validity can be tested by comparing fit indices for merged
-and constrained models (Rönkkö &amp; Cho, 2020). We also include helper
-functions to obtain population models, constrain models and guessing the
-type of index (GoF, BoF).</p></li>
-<li><p>Speed: Given the two previous advantages, deriving flexible
-cutoffs still requires essential simulations. In order to overcome this,
-the simulation functions are written using parallel processing (via
-mclapply on Linux or Mac or parLapply on Windows) to speed up the code.
-With a decent number of replications (default: 500) and a modern CPU,
-flexible cutoffs can be obtained in a few minutes or even
-seconds.</p></li>
-<li><p>Transparency: With switching to an R package, the code of all
-functions becomes transparent, allowing users to better understand the
-derivations as well as provide feedback and troubleshooting regarding
-issues (and there will be many, certainly).</p></li>
+<li><p>FCO1: The original proposed flexible cutoffs (Niemand &amp; Mai,
+2018), only considering Type I error. The p (e.g., 5%) quantile of all
+simulated correct models is taken (assuming a GoF like CFI,
+alternatively 1-p for a BoF like SRMR).</p></li>
+<li><p>FCO2: A modified flexible cutoff considering Type I and II error.
+The 1-p (e.g., 95%) quantile of all simulated misfit models is taken
+when this quantile is smaller than or equal to the p (e.g., 5%)
+quantile. Otherwise, the p (e.g., 5%) quantile of all simulated correct
+models is taken. FCO2 (alike FCO1) always provides a cutoff (assuming a
+GoF like CFI, alternatively p [misfit model] and 1-p [correct model] for
+a BoF like SRMR)</p></li>
+<li><p>DFI: A modified dynamic cutoff considering Type I and II error
+(McNeish &amp; Wolff, 2023). The 1-p (e.g., 95%) quantile of all
+simulated misfit models is taken when this quantile is smaller than or
+equal to the p (e.g., 5%) quantile. Otherwise, no cutoff is provided
+(NA). The DFI-decision rule tends to provide no cutoff when correct and
+misfit models overlap strongly (assuming a GoF like CFI, alternatively p
+[misfit model] and 1-p [correct model] for a BoF like SRMR).</p></li>
+<li><p>CP: A modified cutoff considering Type I and II error via an
+optimal cutpoint (Groskurth et al., 2025). The cutoff is found by taking
+the cutoff with the highest sum of sensitivity (1 – Type I error) and 1
+– specificity (Type II error) derived from simulated correct and misfit
+models via cutpointr::cutpointr. CP always provides a cutoff.</p></li>
+<li><p>Fix: Fixed cutoffs (Hu &amp; Bentler, 1999) are also provided for
+comparison.</p></li>
 </ul>
-<p>As a side note of transforming the previous tool into a package,
-flexible cutoffs obtained from tool and package are not identical, but
-certainly very close to each other. This disadvantage stems from the
-differential use of seeds in the pre-run simulations and the present
-package-based simulations as well as the implementation of the new
-features. If you detect substantial differences between flexible
-cutoffs, please contact us.</p>
+<p>Since it cannot be objectively determined what level or type of
+misspecification (and to which extent) demarcates “acceptable” and
+“unacceptable” misfit, generalizability of the misspecification
+procedure becomes a vital question. To overcome this issue, a
+PROCESS-like (Hayes, 2017) approach is proposed. Instead of expecting
+that the user provides an appropriate misspecified model (as in simsem),
+which might be highly user-unfriendly, the user only provides a type of
+misfit model via model.type. This argument defines the number of
+structural model misspecifications (first integer), measurement model
+misspecifications (second integer) and residual covariance
+misspecifications (third integer) assumed for the misfit model. For
+example, “100” refers to one structural model misspecification (factor
+correlations set to 0), zero measurement model misspecifications (no
+cross-loadings set to 0) and zero residual covariances introduced to the
+correct model described in mod. The default is set to “111”, which
+corresponds to a model where one correlation, one cross-loading and one
+residual covariance may be overlooked. If a researcher is certain, that
+only one type of misspecification is important, the value can be changed
+to a “100”, “010”, or “001” model for example. Comparing multiple
+model.type specifications is recommended.</p>
+<p>Based on feedback on the previous versions of FCO, some new features
+are integrated, most importantly direct input of a fitted lavaan object
+(fit), a one-step calculation of fits, support for different types of
+variables, extensive checking of the model and data characteristics by
+an internal function providing better warning and error descriptions,
+directly setting skewness (sk) and kurtosis (ku), easier parallelization
+options and random generation (random) of the misfit model. Further, two
+more functions have been introduced to better compare the implications
+(e.g., in terms of implied Type I and II errors) across decision rules
+and to visualize the simulated correct and misfit model
+distributions.</p>
+<p>Function flex_co2 now provides detailed information on the quantiles,
+cutoffs (all decision rules plus fixed cutoffs), evaluation (including
+sum of errors, Type I error, Type II error estimates from the simulation
+data), a notation and overlap statistics (percentage overlap from
+overlapping::overlap, AUC from cutpointr::cutpointr and a U-test
+converted to d from rcompanion::wilcoxonR) to identify the degree of
+overlap between simulated correct and misfit model distributions.
+Thereby, users can select an appropriate cutoff, inspect which decision
+rule works best for their data and model and determine how much the
+distributions overlap. Function plot_fit2 complements these features and
+plots the simulated distributions for correct and misfit models to
+illustrate the distributions, their overlap and the cutoff
+quantiles.</p>
+<p>Multiple notes are given regarding the estimates 1) “DFI” does not
+refer to using the same approach as dynamic::cfaHB as proposed by
+McNeish &amp; Wolf (2023). DFI only refers to the authors’ decision
+rule, but applying the same PROCESS-like approach as FCO1, FCO2 and CP.
+2). For compatibility reasons, functions gen_fit, flex_co, pop_mod,
+recommend and recommend_dv are (virtually) unchanged and only apply for
+FCO1. Likewise, functions flex_co2 and plot_fit2 only apply for results
+of this function gen_fit2.</p>
 </div>
-</div>
-<div id="getting-started" class="section level1">
-<h1>Getting started</h1>
-<div id="installation" class="section level2">
-<h2>Installation</h2>
+<div id="getting-started" class="section level2">
+<h2>Getting started</h2>
+<div id="installation" class="section level3">
+<h3>Installation</h3>
 <p>FCO is available on CRAN and can be installed as usual via
-<code>install.packages</code>. Then, the package can be loaded, for
-example with (required packages, if installed, will be loaded
-automatically):</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(FCO)</span></code></pre></div>
+install.packages. Then, the package can be loaded, for example with
+(required packages, if installed, will be loaded automatically):</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">library</span>(FCO)</span></code></pre></div>
 </div>
-<div id="basic-usage" class="section level2">
-<h2>Basic usage</h2>
-<p>In an initial example, a normal user has two objects, a dataset
-<strong>x</strong> and a (theoretical) model <strong>mod</strong> to be
-estimated. For illustrative purposes, we use the data from Babakus and
-Boller (1992), which is available as a correlation matrix of 22 items
-(Q1-Q22) for the SERVQUAL scale consisting of five factors (here F1 to
-F5). We simulated 502 observations from the original correlation matrix
-via <code>MASS::mvrnorm</code> and provide it as a data.frame. This
-dataset is included in the package:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(bb1992)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(bb1992, <span class="dv">3</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           Q1         Q2         Q3        Q4         Q5         Q6         Q7</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 -1.0206565  0.2276041 -1.2568654 0.8136901 -1.6019692  0.7552052 -0.4227379</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2  1.5938691 -0.0276403 -1.2359269 0.4527496  0.4198624  1.2915004  0.3614339</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3  0.6432085  0.5146161  0.9700383 0.5768854  0.1788848 -0.2423614  0.7111541</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           Q8          Q9        Q10        Q11        Q12       Q13         Q14</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 -1.2791570  0.13263442 -0.4502009 -0.3691879 -0.5386581 -1.238408  0.02816952</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2  0.4577506 -0.05877489  0.6064040  0.9672691  1.1028063  1.784519 -0.47735634</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 -0.5452735 -0.54137900 -0.8755678  0.3516510 -1.9334731 -0.498252 -0.33502753</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;           Q15        Q16        Q17        Q18          Q19        Q20</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 -0.36047328  0.3736429 -0.3124173  0.3765030 -0.956071795 1.50488335</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2  0.17534870  0.2421734  1.7328168  0.3081753  0.004130691 0.62142902</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 -0.07986953 -1.4054425 -0.7272241 -0.7679232  0.009754038 0.07108398</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          Q21        Q22</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 -0.2591684 -0.4093789</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2  0.9135299  1.1154500</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 -0.6949648  1.7242517</span></span></code></pre></div>
-<p>The second object required is a model to be fitted to the data. A
-simple <strong>lavaan</strong> syntax for an empirical five-factor
-solution looks like this:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>mod <span class="ot">&lt;-</span> <span class="st">&quot;</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="st">F1 =~ Q5 + Q7 + Q8</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="st">F2 =~ Q2 + Q4</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="st">F3 =~ Q10 + Q11 + Q12 + Q13 + Q18 + Q19 + Q20 + Q21 + Q22</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="st">F4 =~ Q1 + Q17</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="st">F5 =~ Q6 + Q14 + Q15 + Q16</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span></span></code></pre></div>
-<p>Both objects, the dataset <code>bb1992</code>, and the model
-<code>mod</code> can then be used to estimate the CFA via
-<strong>lavaan</strong>. For simplicity reasons, we focus on two fit
-indices, <strong>CFI</strong> and <strong>SRMR</strong> in this example
-(Niemand &amp; Mai, 2018, p. 1170).</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">cfa</span>(mod, <span class="at">data =</span> bb1992)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">fitmeasures</span>(res, <span class="at">fit.measures =</span> <span class="fu">c</span>(<span class="st">&quot;CFI&quot;</span>, <span class="st">&quot;SRMR&quot;</span>))</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   cfi  srmr </span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.960 0.038</span></span></code></pre></div>
-<p>Note that both values would suffice fixed cutoffs such as CFI ≥ .95
-and SRMR ≤ .09, hence concluding that the model fits the data well.
-However, given the empirical setting of the example study, it would be
-beneficial to investigate the uncertainty of this finding. This is where
-flexible cutoffs come into play.</p>
-<p>To derive the flexible cutoffs, one only needs the two objects
-discussed before. All other arguments are set internally via standard
-options (see below). In this case, we however only use 10 replications,
-to speed up the derivation. The function <code>gen_fit</code> generates
-a list <code>fits.single</code> of fit indicators for the underlying
-data and model, as well as lists for the other arguments. The function
-<code>flex_co</code> then takes this list and estimates the intended
-flexible cutoffs for the selected fit indices. Since the default setting
-for the preset uncertainty is .05, we can also omit this argument. For
-now, this code is sufficient:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>fits.single <span class="ot">&lt;-</span> <span class="fu">gen_fit</span>(<span class="at">mod1 =</span> mod, <span class="at">x =</span> bb1992, <span class="at">rep =</span> <span class="dv">10</span>)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#Please use for flexible cutoffs as desribed below:</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#fits.single &lt;- gen_fit(mod1 = mod, x = bb1992, rep = 100) </span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">flex_co</span>(<span class="at">fits =</span> fits.single, <span class="at">index =</span> <span class="fu">c</span>(<span class="st">&quot;CFI&quot;</span>, <span class="st">&quot;SRMR&quot;</span>))</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in flex_co(fits = fits.single, index = c(&quot;CFI&quot;, &quot;SRMR&quot;)): The number of</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; replications is lower than the recommended minimum of 500. Consider with care.</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $cutoff</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        CFI       SRMR </span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.97826871 0.03659316 </span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $index</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;CFI&quot;  &quot;SRMR&quot;</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $alpha</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.05</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $gof</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   CFI  SRMR </span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  TRUE FALSE </span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $replications</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`number of non-converging models`</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`share of non-converging models`</span></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span></code></pre></div>
-<p>In this case, the second function returns a warning that the number
-of replications is below the recommended minimum. For non-illustrative
-purposes, we recommend higher values (e.g., 500 or 1,000). The function
-<code>flex_co</code> also returns objects <code>cutoff</code>,
-<code>index</code>, <code>alpha</code>, <code>gof</code>,
-<code>replications</code>, <code>number of non-converging models</code>
-and <code>share of non-converging models</code>. <code>Cutoff</code>
-provides the flexible cutoff values for the selected indices.
-<code>Index</code> returns the name of the indices selected and alpha
-returns the preset uncertainty. <code>Gof</code> returns the type of fit
-index (GoF or BoF, logically, GoF = FALSE indicates BoF). This can be
-either stated manually in the function with the argument
-<code>gof</code> or is guessed by the helper function
-<code>index_guess</code>, which works for all established fit
-indices.</p>
-<p>Note that the cutoff values for CFI and SRMR are higher (CFI = .971
-for 100 replications) and lower (SRMR = .036 for 100 replications) than
-the respective empirical values (CFI = .960, SRMR = .038). That is,
-given the uncertainty of .05, as well as the present model and data, the
-cutoffs are close to the empirical values, but the model is marginally
-rejected. We can however simulate what happens if we assume less (.001)
-or more (.10) uncertainty.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">flex_co</span>(<span class="at">fits =</span> fits.single,</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">index =</span> <span class="fu">c</span>(<span class="st">&quot;CFI&quot;</span>, <span class="st">&quot;SRMR&quot;</span>),</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">alpha.lev =</span> .<span class="dv">001</span>)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in flex_co(fits = fits.single, index = c(&quot;CFI&quot;, &quot;SRMR&quot;), alpha.lev =</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.001): The number of replications is lower than the recommended minimum of</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 500. Consider with care.</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $cutoff</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        CFI       SRMR </span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.97826871 0.03659316 </span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $index</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;CFI&quot;  &quot;SRMR&quot;</span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $alpha</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.001</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $gof</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   CFI  SRMR </span></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  TRUE FALSE </span></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $replications</span></span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`number of non-converging models`</span></span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`share of non-converging models`</span></span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a><span class="fu">flex_co</span>(<span class="at">fits =</span> fits.single,</span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>        <span class="at">index =</span> <span class="fu">c</span>(<span class="st">&quot;CFI&quot;</span>, <span class="st">&quot;SRMR&quot;</span>),</span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>        <span class="at">alpha.lev =</span> .<span class="dv">10</span>)</span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in flex_co(fits = fits.single, index = c(&quot;CFI&quot;, &quot;SRMR&quot;), alpha.lev =</span></span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.1): The number of replications is lower than the recommended minimum of 500.</span></span>
-<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Consider with care.</span></span>
-<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $cutoff</span></span>
-<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        CFI       SRMR </span></span>
-<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.97980796 0.03616053 </span></span>
-<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $index</span></span>
-<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;CFI&quot;  &quot;SRMR&quot;</span></span>
-<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $alpha</span></span>
-<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.1</span></span>
-<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $gof</span></span>
-<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   CFI  SRMR </span></span>
-<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  TRUE FALSE </span></span>
-<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $replications</span></span>
-<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
-<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`number of non-converging models`</span></span>
-<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`share of non-converging models`</span></span>
-<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span></code></pre></div>
-<p>We do not need to re-simulate the flexible cutoffs, as the function
-<code>flex_co</code> takes the simulated values from the generated fit
-indices and we only need to change the uncertainty via the
-<code>alpha.lev</code> argument. As expected, if one assumes less
-uncertainty—or more certainty, for example because the model has been
-tested before—the flexible cutoffs tend to be closer to the empirical
-values for more replications. Likewise, when assuming more uncertainty
-(e.g., a novel model), the cutoffs more clearly reject the model.</p>
-<p>In principle, this is the core usage originally intended for flexible
-cutoffs. We however included a substantial number of other features that
-may be interesting for users. The following chapter gives an overview of
-the possible features.</p>
+<div id="basic-usage" class="section level3">
+<h3>Basic usage</h3>
+<p>In an initial example, we use the data from Holzinger &amp; Swineford
+(1939) to illustrate the basic features since version 2.0. The user
+postulates the following model and generates a lavaan object from a
+cfa.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">library</span>(lavaan)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>HS.model <span class="ot">&lt;-</span> <span class="st">&#39; visual  =~ x1 + x2 + x3</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="st">              textual =~ x4 + x5 + x6</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="st">              speed   =~ x7 + x8 + x9 &#39;</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">cfa</span>(</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  HS.model,</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="at">data =</span> HolzingerSwineford1939</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>)</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="fu">fitmeasures</span>(fit)</span></code></pre></div>
+<p>Based on this fitted object, the user generates simulated fit indices
+for two models, a correct model and misspecified model. The correct
+model defaults to “NM” (Niemand &amp; Mai, 2018) with equal loadings and
+correlations. It is not the empirical model under investigation but a
+truly correct model (since one cannot be sure that the model is truly
+correct). The misspecified model is generated from a number of
+misspecifications that the user perceives as possible for the given
+model. In the default case, these are 1 cross-loading, 1 omitted
+correlation and 1 residual covariance (111-model).</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co">#Note: Demonstration only! Please use higher numbers of replications for your applications (&gt;= 500).</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>fits <span class="ot">&lt;-</span> <span class="fu">gen_fit2</span>(<span class="at">fit =</span> fit, <span class="at">rep =</span> <span class="dv">100</span>)</span></code></pre></div>
+<p>The simulation can be run on multiple cores to speed up simulations.
+After a while, the simulation is complete and the user can inspect the
+results via the function flex_co2 providing the results and cutoffs for
+selected fit indices under different decision rules as well as a plot of
+the selected fit indices via plot_fit2. By default, CFI is used as the
+index since it might be the easiest to understand. Indices can be
+specified by argument index.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">flex_co2</span>(fits)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="fu">plot_fit2</span>(fits)</span></code></pre></div>
+<p>The main principle of this evaluation is that the user can decide
+which cutoff is best for the given model, based on different acceptable
+Type I errors (alpha), Type II errors (beta) and decision rules. The
+tibble for evaluation is sorted in decreasing sum of error types. For
+example, when the user only accepts an a-priori alpha and beta of .05,
+the CP (cut point) decision rule leads to the lowest sum of error types
+(Type I + II) for the given model with a cutoff of .956 for CFI (first
+row of evaluation). The empirical CFI value however was .931
+(fitmeasures, see above). While rejecting the model, the user commits an
+error of .12 (.03 Type I, .09 Type II). When extending the simulation to
+1,000 replications (rep = 1000L), the CP decision rule would commit an
+error of .17 (sum of error types = .167), which indicates that model fit
+is “close” since distributions somewhat overlap (11.1%).</p>
 </div>
 </div>
-<div id="details" class="section level1">
-<h1>Details</h1>
-<div id="population-model" class="section level2">
-<h2>Population model</h2>
+<div id="details" class="section level2">
+<h2>Details</h2>
+<div id="population-model" class="section level3">
+<h3>Population model</h3>
 <p>The basic idea of flexible cutoffs is that these cutoffs come from a
-<strong>sui-generis</strong> (having it’s own shape)
-<strong>distribution</strong> of fit indices for a correct, unbiased
-model. Essentially, this means that the population model is correctly
-specified with no errors. For example, all observed variables load on
-the latent variables they are supposed to load on, all correlations are
-estimated freely, and the data is not excessively skewed. This
-assumption makes flexible cutoffs potentially more objective since no
-subjective modification to the model (misspecification) or data
-(skewness, kurtosis) is needed. However, this also implies that the
-population model is specified not simply on the basis of the own
-empirical model. In an anecdotal manner, one can compare this to the
-introduction of the meter. Assuming that one’s own measure is exactly 1
-meter is likely error prone. One needs a validated meter bar. The meter
-bar in this case is the <strong>population model</strong>.</p>
-<p>The function <code>pop_mod</code> specifies this population model. We
+sui-generis (having it’s own shape) distribution of fit indices for a
+correct, unbiased model. Essentially, this implies that the population
+model is correctly specified with no errors. For example, all observed
+variables load on the latent variables they are supposed to load on, all
+correlations are estimated freely, and the data is not excessively
+skewed. This assumption makes flexible cutoffs potentially more
+objective since no subjective modification to the model
+(misspecification) or data (skewness, kurtosis) is needed. However, this
+also implies that the population model is specified not simply on the
+basis of the own empirical model. In an anecdotal manner, one can
+compare this to the introduction of the meter. Assuming that one’s own
+measure is exactly 1 meter is likely error prone. One needs a validated
+meter bar. The meter bar in this case is the population model.</p>
+<p>The internal function pop_mod specifies this population model. We
 offer three types of population models, the NM (Niemand &amp; Mai, 2018)
 option, the HB (Hu &amp; Bentler, 1999) option, and the EM (empirical)
-option. Function <code>gen_fit</code> internally calls function
-<code>pop_mod</code>, but the argument <code>type</code> is also
-available in the latter function for flexibility. We can compare these
-models by:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pop_mod</span>(mod, <span class="at">x =</span> bb1992, <span class="at">type =</span> <span class="st">&quot;NM&quot;</span>)<span class="sc">$</span>pop.mod</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;F1=~0.7*Q5+0.7*Q7+0.7*Q8 \nF2=~0.7*Q2+0.7*Q4 \nF3=~0.7*Q10+0.7*Q11+0.7*Q12+0.7*Q13+0.7*Q18+0.7*Q19+0.7*Q20+0.7*Q21+0.7*Q22 \nF4=~0.7*Q1+0.7*Q17 \nF5=~0.7*Q6+0.7*Q14+0.7*Q15+0.7*Q16 \nF1~~1*F1 \nF2~~0.3*F1 \nF3~~0.3*F1 \nF4~~0.3*F1 \nF5~~0.3*F1 \nF2~~1*F2 \nF3~~0.3*F2 \nF4~~0.3*F2 \nF5~~0.3*F2 \nF3~~1*F3 \nF4~~0.3*F3 \nF5~~0.3*F3 \nF4~~1*F4 \nF5~~0.3*F4 \nF5~~1*F5 \n \n&quot;</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">pop_mod</span>(mod, <span class="at">x =</span> bb1992, <span class="at">type =</span> <span class="st">&quot;HB&quot;</span>)<span class="sc">$</span>pop.mod</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;F1=~0.7*Q5+0.75*Q7+0.8*Q8 \nF2=~0.75*Q2+0.75*Q4 \nF3=~0.7*Q10+0.7*Q11+0.7*Q12+0.7*Q13+0.75*Q18+0.8*Q19+0.8*Q20+0.8*Q21+0.8*Q22 \nF4=~0.75*Q1+0.75*Q17 \nF5=~0.7*Q6+0.75*Q14+0.75*Q15+0.8*Q16 \nF1~~1*F1 \nF2~~0.5*F1 \nF3~~0.4*F1 \nF4~~0.3*F1 \nF5~~0.5*F1 \nF2~~1*F2 \nF3~~0.4*F2 \nF4~~0.5*F2 \nF5~~0.4*F2 \nF3~~1*F3 \nF4~~0.3*F3 \nF5~~0.5*F3 \nF4~~1*F4 \nF5~~0.4*F4 \nF5~~1*F5 \n \n&quot;</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">pop_mod</span>(mod, <span class="at">x =</span> bb1992, <span class="at">type =</span> <span class="st">&quot;EM&quot;</span>)<span class="sc">$</span>pop.mod</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;F1=~0.807*Q5+0.637*Q7+0.876*Q8 \nF2=~0.747*Q2+0.842*Q4 \nF3=~0.519*Q10+0.568*Q11+0.597*Q12+0.697*Q13+0.603*Q18+0.557*Q19+0.534*Q20+0.578*Q21+0.552*Q22 \nF4=~0.659*Q1+0.772*Q17 \nF5=~0.727*Q6+0.719*Q14+0.826*Q15+0.752*Q16 \nF1~~1*F1 \nF2~~0.36*F1 \nF3~~0.71*F1 \nF4~~0.641*F1 \nF5~~0.807*F1 \nF2~~1*F2 \nF3~~0.349*F2 \nF4~~0.486*F2 \nF5~~0.492*F2 \nF3~~1*F3 \nF4~~0.625*F3 \nF5~~0.8*F3 \nF4~~1*F4 \nF5~~0.831*F4 \nF5~~1*F5 \n \n&quot;</span></span></code></pre></div>
+option. Function gen_fit (gen_fit2) internally calls function pop_mod,
+but the argument type is also available in the latter function for
+flexibility. We can compare these models by:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>FCO<span class="sc">:::</span><span class="fu">pop_mod</span>(<span class="at">mod =</span> HS.model, <span class="at">x =</span> lavaan<span class="sc">::</span>HolzingerSwineford1939)<span class="sc">$</span>pop.mod</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>FCO<span class="sc">:::</span><span class="fu">pop_mod</span>(<span class="at">mod =</span> HS.model, <span class="at">x =</span> lavaan<span class="sc">::</span>HolzingerSwineford1939, <span class="at">type =</span> <span class="st">&quot;HB&quot;</span>)<span class="sc">$</span>pop.mod</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>FCO<span class="sc">:::</span><span class="fu">pop_mod</span>(<span class="at">mod =</span> HS.model, <span class="at">x =</span> lavaan<span class="sc">::</span>HolzingerSwineford1939, <span class="at">type =</span> <span class="st">&quot;EM&quot;</span>)<span class="sc">$</span>pop.mod</span></code></pre></div>
 <p>When the type is “NM”, all loadings (default: .7) and correlations
-(default: .3) are assumed to be equal (\n denotes a line break for the
-<strong>lavaan</strong> syntax). When the type is “HB”, the loadings
-vary by .05 around .75, depending on the number of indicators and the
-correlations are either .5, .4, or .3, also depending on the number of
-latent variables. Finally, when the type is “EM”, the function runs a
-CFA and determines the empirical loadings and correlations. Since one
-cannot assume the own empirical model to be correct, we advise users to
-not use the “EM” type for model validation. This type might be useful
-for other features (see further applications). Hence, the
-<strong>default</strong> is set to “NM”. Since the by far most selected
-standardized factor loading (<code>afl</code>) in our tool was .7, we
-set the default value to .7. Other options between 0 and 1 are possible.
-The average correlation between latent variables (<code>aco</code>) is
-set to a default of .3, but this can be changed likewise. To increase
-flexibility, the argument <code>standardized</code> (default: TRUE) can
-also be called, allowing for the specification of standardized (all
-loadings &lt; 1, all covariances are correlations) and unstandardized
-(loadings &gt; 1, covariances, not correlations) parameters. The
-function returns a warning when the empirical model suspects
-standardized or unstandardized loadings and this is in conflict with the
-<code>standardized</code> argument. See below:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pop_mod</span>(mod, <span class="at">x =</span> bb1992, <span class="at">type =</span> <span class="st">&quot;NM&quot;</span>, <span class="at">afl =</span> .<span class="dv">9</span>)<span class="sc">$</span>pop.mod</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;F1=~0.9*Q5+0.9*Q7+0.9*Q8 \nF2=~0.9*Q2+0.9*Q4 \nF3=~0.9*Q10+0.9*Q11+0.9*Q12+0.9*Q13+0.9*Q18+0.9*Q19+0.9*Q20+0.9*Q21+0.9*Q22 \nF4=~0.9*Q1+0.9*Q17 \nF5=~0.9*Q6+0.9*Q14+0.9*Q15+0.9*Q16 \nF1~~1*F1 \nF2~~0.3*F1 \nF3~~0.3*F1 \nF4~~0.3*F1 \nF5~~0.3*F1 \nF2~~1*F2 \nF3~~0.3*F2 \nF4~~0.3*F2 \nF5~~0.3*F2 \nF3~~1*F3 \nF4~~0.3*F3 \nF5~~0.3*F3 \nF4~~1*F4 \nF5~~0.3*F4 \nF5~~1*F5 \n \n&quot;</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">pop_mod</span>(mod, <span class="at">x =</span> bb1992, <span class="at">type =</span> <span class="st">&quot;NM&quot;</span>, <span class="at">aco =</span> .<span class="dv">5</span>)<span class="sc">$</span>pop.mod</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;F1=~0.7*Q5+0.7*Q7+0.7*Q8 \nF2=~0.7*Q2+0.7*Q4 \nF3=~0.7*Q10+0.7*Q11+0.7*Q12+0.7*Q13+0.7*Q18+0.7*Q19+0.7*Q20+0.7*Q21+0.7*Q22 \nF4=~0.7*Q1+0.7*Q17 \nF5=~0.7*Q6+0.7*Q14+0.7*Q15+0.7*Q16 \nF1~~1*F1 \nF2~~0.5*F1 \nF3~~0.5*F1 \nF4~~0.5*F1 \nF5~~0.5*F1 \nF2~~1*F2 \nF3~~0.5*F2 \nF4~~0.5*F2 \nF5~~0.5*F2 \nF3~~1*F3 \nF4~~0.5*F3 \nF5~~0.5*F3 \nF4~~1*F4 \nF5~~0.5*F4 \nF5~~1*F5 \n \n&quot;</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">pop_mod</span>(mod, <span class="at">x =</span> bb1992, <span class="at">type =</span> <span class="st">&quot;EM&quot;</span>, <span class="at">standardized =</span> <span class="cn">FALSE</span>)<span class="sc">$</span>pop.mod</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in pop_mod(mod, x = bb1992, type = &quot;EM&quot;, standardized = FALSE): All</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; loadings are &lt; 1. Consider revision of standardized.</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;F1=~0.807*Q5+0.637*Q7+0.876*Q8 \nF2=~0.747*Q2+0.842*Q4 \nF3=~0.519*Q10+0.568*Q11+0.597*Q12+0.697*Q13+0.603*Q18+0.557*Q19+0.534*Q20+0.578*Q21+0.552*Q22 \nF4=~0.659*Q1+0.772*Q17 \nF5=~0.727*Q6+0.719*Q14+0.826*Q15+0.752*Q16 \nF1~~1*F1 \nF2~~0.36*F1 \nF3~~0.71*F1 \nF4~~0.641*F1 \nF5~~0.807*F1 \nF2~~1*F2 \nF3~~0.349*F2 \nF4~~0.486*F2 \nF5~~0.492*F2 \nF3~~1*F3 \nF4~~0.625*F3 \nF5~~0.8*F3 \nF4~~1*F4 \nF5~~0.831*F4 \nF5~~1*F5 \n&quot;</span></span></code></pre></div>
+(default: .3) are assumed to be equal. When the type is “HB”, the
+loadings vary by .05 around .75, depending on the number of indicators
+and the correlations are either .5, .4, or .3, also depending on the
+number of latent variables. Finally, when the type is “EM”, the function
+runs a CFA and determines the empirical loadings and correlations. Since
+one cannot assume the own empirical model to be correct, we advise users
+to not use the “EM” type for model validation. This type might be useful
+for other features (see further applications). Hence, the default is set
+to “NM”. Since the by far most selected standardized factor loading
+(afl) in our tool was .7, we set the default value to .7. Other options
+between 0 and 1 are possible. The average correlation between latent
+variables (aco) is set to a default of .3, but this can be changed
+likewise. To increase flexibility, the argument standardized (default:
+TRUE) can also be called, allowing for the specification of standardized
+(all loadings &lt; 1, all covariances are correlations) and
+unstandardized (loadings &gt; 1, covariances, not correlations)
+parameters. The function returns a warning when the empirical model
+suspects standardized or unstandardized loadings and this is in conflict
+with the standardized argument.</p>
 </div>
-<div id="alternative-specification-via-population-model-and-sample-size" class="section level2">
-<h2>Alternative specification via population model and sample size</h2>
-<p>As an alternative to provide a model and data, it is possible to
-specify a population model and the sample size of your data instead.
-This might be useful for simulation approaches where the population
-model is provided. Hence, for example, the generated population model
-can be used:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>pop.mod <span class="ot">&lt;-</span> <span class="fu">pop_mod</span>(mod, <span class="at">x =</span> bb1992)<span class="sc">$</span>pop.mod</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>fits.altern <span class="ot">&lt;-</span> <span class="fu">gen_fit</span>(<span class="at">pop.mod1 =</span> pop.mod, <span class="at">n =</span> <span class="dv">502</span>, <span class="at">rep =</span> <span class="dv">10</span>)</span></code></pre></div>
+<div id="population-models-for-other-model-types" class="section level3">
+<h3>Population models for other model types</h3>
+<p>Starting with version 2.0, other model types other than CFA are also
+possible, most prominently structural models via CBSEM (SEM). To
+determine the correct population model, this however requires some
+assumption, if the population type is “NM” or “HB” as one needs to know
+what size loadings, correlations, regressions etc. should be assumed.
+This is obviously not needed if type is “EM”, the default. For example,
+let us assume the example model to be a SEM with a regression and no
+correlation between F1 and F2:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>cmod <span class="ot">&lt;-</span> <span class="st">&quot;F1 =~ x1 + x2 + x3</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="st">          F2 =~ x4 + x5 + x6</span></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="st">          F3 =~ x7 + x8 + x9</span></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="st">          F3 ~ F1 + F2</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="st">          F1 ~~ .0 * F2&quot;</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>fit2 <span class="ot">&lt;-</span> <span class="fu">sem</span>(<span class="at">model =</span> cmod, <span class="at">data =</span> lavaan<span class="sc">::</span>HolzingerSwineford1939)</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="fu">fitmeasures</span>(fit2)</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>fits2 <span class="ot">&lt;-</span> <span class="fu">gen_fit2</span>(<span class="at">fit =</span> fit2, <span class="at">cfa =</span> <span class="cn">FALSE</span>, <span class="at">type =</span> <span class="st">&quot;NM&quot;</span>, <span class="at">es.f2 =</span> <span class="st">&quot;moderate&quot;</span>, <span class="at">rep =</span> <span class="dv">100</span>)</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="fu">flex_co2</span>(fits2)</span></code></pre></div>
+<p>By setting the (effect) sizes for loadings (es.lam), correlations
+(es.cor) und regressions (es.f2) to “low”, “moderate” or “large”, users
+can tailor these parameters to their assumptions, but still preserve the
+same patterns of loadings and correlations as in population types “NM”
+and “HB”. Size es.lam defaults to “low” (lambda = .7), “moderate” (.8)
+and “large” (.9) are also possible. Based on Cohens (1988)
+recommendations, es.cor, .1 (low), .3 (moderate) and .5 (large, default)
+and es.f2, .02 (low), .15 (moderate, default) and .35 (large) are
+available as options.</p>
+<p>What this feature essentially does is avoiding an unfair comparison
+of a SEM model (which usually has less perfect fit than a comparable CFA
+as it might not incorporate all correlations, in the example: CFI =
+.891) used to derive the fit indices with a CFA model (in the example:
+CFI = .931) which was used to simulate the cutoffs. Instead, a SEM model
+fit is compared with SEM-model based cutoffs. When extending the
+simulation to 1,000 replications (rep = 1000L), the cutoffs would be
+virtually certain that the model fit is “not acceptable” (sum of error
+types = .02). As a side note, the internal function pop_mod_reg can be
+used to inspect the population model, for example:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a>FCO<span class="sc">:::</span><span class="fu">pop_mod_reg</span>(<span class="at">mod =</span> cmod, <span class="at">x =</span> lavaan<span class="sc">::</span>HolzingerSwineford1939, <span class="at">type =</span> <span class="st">&quot;NM&quot;</span>, <span class="at">es.f2 =</span> <span class="st">&quot;low&quot;</span>)<span class="sc">$</span>pop.mod</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>FCO<span class="sc">:::</span><span class="fu">pop_mod_reg</span>(<span class="at">mod =</span> cmod, <span class="at">x =</span> lavaan<span class="sc">::</span>HolzingerSwineford1939, <span class="at">type =</span> <span class="st">&quot;NM&quot;</span>, <span class="at">es.f2 =</span> <span class="st">&quot;moderate&quot;</span>)<span class="sc">$</span>pop.mod</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>FCO<span class="sc">:::</span><span class="fu">pop_mod_reg</span>(<span class="at">mod =</span> cmod, <span class="at">x =</span> lavaan<span class="sc">::</span>HolzingerSwineford1939, <span class="at">type =</span> <span class="st">&quot;NM&quot;</span>, <span class="at">es.f2 =</span> <span class="st">&quot;large&quot;</span>)<span class="sc">$</span>pop.mod</span></code></pre></div>
 </div>
-<div id="assumptions-from-data" class="section level2">
-<h2>Assumptions from data</h2>
-<p>In order to follow this principle of objectivity, the data
-<code>x</code> is essentially not that important for deriving flexible
-cutoffs, unless specified differently. That is, <code>x</code>
-determines the sample size (N) for the simulations and the multivariate
-non-normality of the data, if <code>assume.mvn = FALSE</code> (default:
-TRUE). Both are only relevant for the <code>gen_fit</code> function.</p>
-<p>Internally, the function <code>gen_fit</code> calls the
-<code>simulateData</code> function from <strong>lavaan</strong>, which
-itself does not require data, but takes a population model from function
-<code>pop_mod</code>. Sample size is specified via
-<code>sample.nobs</code> by <code>nrow(x)</code>. Arguments skewness and
-kurtosis are derived from <code>semTools::mardiaKurtosis(x)</code> and
-<code>semTools::mardiaSkew(x)</code> in package
-<strong>semTools</strong>, if <code>assume.mvn = FALSE</code>.</p>
-<p>Since there seems to be no unified agreement on what “no”, “low”,
-“moderate”, or “high” kurtosis / skewness constitutes (Niemand &amp;
-Mai, 2018), we omitted the once verbally differentiated levels available
-in the tool. As mentioned before, <code>x</code> is also needed for the
-empirical population model type “EM” in <code>pop_mod</code>.</p>
+<div id="different-data-types" class="section level3">
+<h3>Different data types</h3>
+<p>Usually, multivariate normally distributed (normal) (manifest)
+variables are assumed, which is often not the case. In the original
+version, users could change, for example after a warning is given, the
+arguments sk (skewness, default: 0) and ku (kurtosis, default: 1) in
+gen_fit or gen_fit2 to account for multivariate non-normality. In this
+case, the simulation function lavaan::simulateData produces data with
+the set skewness and kurtosis. In version 2, the variable types can be
+changed as well based on package PoisBinOrdNor, allowing for count,
+binary, ordinal and normal variables. The user then only needs to
+provide a vector data.types for each variable (in the proper order)
+indicating “C” (count), “B” (binary), “O” (ordinal) and “N” (normal) as
+an argument. For example:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>dat <span class="ot">&lt;-</span> lavaan<span class="sc">::</span>HolzingerSwineford1939</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>cdat <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">select</span>(dat, x1, x2, x3, x4, x5, x6, x7, x8, x9)</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co">#For demo purposes, some variables are changed:</span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>cdat <span class="ot">&lt;-</span> cdat <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="at">x1 =</span> <span class="fu">round</span>(x1, <span class="at">digits =</span> <span class="dv">0</span>),</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>  <span class="at">x3 =</span> <span class="fu">round</span>(x3, <span class="at">digits =</span> <span class="dv">0</span>),</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>  <span class="at">x2 =</span> <span class="fu">ifelse</span>(x2 <span class="sc">&gt;</span> <span class="dv">4</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>  <span class="at">x4 =</span> <span class="fu">ifelse</span>(x4 <span class="sc">&gt;</span> <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">0</span>),</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>  <span class="at">x5 =</span> <span class="fu">round</span>(x5, <span class="at">digits =</span> <span class="dv">0</span>),</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>  <span class="at">x8 =</span> <span class="fu">round</span>(x8, <span class="at">digits =</span> <span class="dv">0</span>)</span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a>)</span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a>cfit <span class="ot">&lt;-</span> lavaan<span class="sc">::</span><span class="fu">cfa</span>(<span class="at">model =</span> HS.model, <span class="at">data =</span> cdat)</span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a>cfits <span class="ot">&lt;-</span> <span class="fu">gen_fit2</span>(<span class="at">fit =</span> cfit,</span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a>                  <span class="at">data.types =</span> <span class="fu">c</span>(<span class="st">&quot;C&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;C&quot;</span>, <span class="st">&quot;B&quot;</span>, <span class="st">&quot;O&quot;</span>, <span class="st">&quot;N&quot;</span>, <span class="st">&quot;N&quot;</span>, <span class="st">&quot;O&quot;</span>, <span class="st">&quot;N&quot;</span>), <span class="at">rep =</span> <span class="dv">100</span>)</span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a><span class="fu">flex_co2</span>(cfits)</span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a><span class="fu">plot_fit2</span>(cfits)</span></code></pre></div>
+<p>Internally, a function gen_nnd is called in this case, taking the
+defined data types using the median as the lambda value (count), the
+mean (binary, normal) or the frequencies of distinct values (ordinal) as
+expected values from the data. Together with a Spearman-type correlation
+matrix of the variables, the intermediate correlation matrix (see
+PoisBinOrdNor::genPBONdata) is estimated, which is then used to
+determine a new dataset used instead of the original data for simulating
+the cutoffs.</p>
+<p>For the example, deviating from normal variables leads to a worsened
+fit (CFI = .902 instead of .931). Flexible cutoffs account for this data
+and provide a fairer comparison compared to fixed cutoffs. When
+extending the simulation to 1,000 replications (rep = 1000L), fixed
+cutoffs would indicate an overall error of .343, compared to .266 for CP
+and .277 for FCO1/2. That is, due to an still extensive overlap (15.3%),
+the decision to reject the model is less error-prone when using flexible
+cutoffs under these conditions.</p>
 </div>
-<div id="index-guessing" class="section level2">
-<h2>Index guessing</h2>
-<p>For flexible cutoffs, the type of a fit index (GoF or BoF) plays an
-essential role, as the lower (GoF) or upper (BoF) width of a confidence
-interval is required. Since empirically guessing the type may be
-misleading (e.g., a very bad model may produce a distribution of SRMR
-that is not different from a distribution for a CFI in a better fitting
-model), we implemented a helper function <code>index_guess</code> that
-simply guesses the fit index by name (upper or lowercase
-considered):</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">index_guess</span>(<span class="st">&quot;cfi&quot;</span>)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;GoF&quot;</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">index_guess</span>(<span class="st">&quot;CFI&quot;</span>)</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;GoF&quot;</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="fu">index_guess</span>(<span class="st">&quot;srmr&quot;</span>)</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;BoF&quot;</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="fu">index_guess</span>(<span class="st">&quot;SRMR&quot;</span>)</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;BoF&quot;</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="fu">index_guess</span>(<span class="st">&quot;mickey_mouse&quot;</span>)</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;not a fit index&quot;</span></span></code></pre></div>
-<p>This function is applied in the <code>flex_co</code> function. If one
-specifies established fit indices, such as CFI or SRMR, the
-<code>gof</code> argument is not required. However, this feature does
-not override the <code>gof</code> argument. For example:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">flex_co</span>(</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">fits =</span> fits.single,</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">index =</span> <span class="fu">c</span>(<span class="st">&quot;CFI&quot;</span>, <span class="st">&quot;SRMR&quot;</span>),</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">gof =</span> <span class="fu">c</span>(<span class="cn">TRUE</span>, <span class="cn">FALSE</span>)</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in flex_co(fits = fits.single, index = c(&quot;CFI&quot;, &quot;SRMR&quot;), gof = c(TRUE,</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; : The number of replications is lower than the recommended minimum of 500.</span></span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Consider with care.</span></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $cutoff</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        CFI       SRMR </span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.97826871 0.03659316 </span></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $index</span></span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;CFI&quot;  &quot;SRMR&quot;</span></span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $alpha</span></span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.05</span></span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $gof</span></span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   CFI  SRMR </span></span>
-<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  TRUE FALSE </span></span>
-<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $replications</span></span>
-<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
-<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`number of non-converging models`</span></span>
-<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`share of non-converging models`</span></span>
-<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a><span class="fu">flex_co</span>(</span>
-<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">fits =</span> fits.single,</span>
-<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>  <span class="at">index =</span> <span class="fu">c</span>(<span class="st">&quot;CFI&quot;</span>, <span class="st">&quot;SRMR&quot;</span>),</span>
-<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>  <span class="at">gof =</span> <span class="fu">c</span>(<span class="cn">FALSE</span>, <span class="cn">TRUE</span>)</span>
-<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in flex_co(fits = fits.single, index = c(&quot;CFI&quot;, &quot;SRMR&quot;), gof = c(FALSE,</span></span>
-<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; : The number of replications is lower than the recommended minimum of 500.</span></span>
-<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Consider with care.</span></span>
-<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $cutoff</span></span>
-<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        CFI       SRMR </span></span>
-<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1.00000000 0.03096027 </span></span>
-<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $index</span></span>
-<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;CFI&quot;  &quot;SRMR&quot;</span></span>
-<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $alpha</span></span>
-<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.05</span></span>
-<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $gof</span></span>
-<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   CFI  SRMR </span></span>
-<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; FALSE  TRUE </span></span>
-<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $replications</span></span>
-<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
-<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`number of non-converging models`</span></span>
-<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`share of non-converging models`</span></span>
-<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span></code></pre></div>
-<p>The first version (the <code>gof</code> argument can also be omitted
-as the guess is correct) gives the correct flexible cutoffs, the second
-version does not, as CFI is not a BoF and SRMR is not a GoF. Hence,
-users should be careful with specifying this argument. For novel fit
-indices or alternative uses, it may however be beneficial to maintain
-this argument.</p>
+<div id="multi-core-support" class="section level3">
+<h3>Multi-core support</h3>
+<p>Since simulations need some time, we implemented multi-core support.
+Depending on the system the package runs on, function gen_fit used
+mclapply (on Linux or Mac) and parLapply (on Windows) from package
+parallel for version &lt; 2. Gen_fit auto-detects the operating system
+and chooses the proper function. Gen_fit2 uses foreach (on all
+platforms) from package foreach for version 2. Due to the different
+parallelization functions, results from gen_fit and gen_fit2 may be
+slightly different.</p>
+<p>In the common situation that users have multiple cores, more cores
+can be set by the argument cores. However, note that the function
+returns an error if the number of available cores of the system is lower
+than the number of cores provided by the cores argument (e.g., cores =
+4). Of course, multi-core support can be switched off by setting the
+argument multi.core = FALSE (gen_fit) or cores = 1 (gen_fit2). For
+example:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">gen_fit2</span>(fit, <span class="at">cores =</span> <span class="dv">4</span>, <span class="at">rep =</span> <span class="dv">100</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="fu">gen_fit2</span>(fit, <span class="at">cores =</span> <span class="dv">1</span>, <span class="at">rep =</span> <span class="dv">100</span>)</span></code></pre></div>
 </div>
-<div id="multi-core-support" class="section level2">
-<h2>Multi-core support</h2>
-<p>Since simulations may need some time, we implemented multi-core
-support. Depending on the system the package runs on, function
-<code>gen_fit</code> uses <code>mclapply</code> (on Linux or Mac) and
-<code>parLapply</code> (on Windows) from package
-<strong>parallel</strong>. The default is set to TRUE and two cores.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(<span class="fu">gen_fit</span>(<span class="at">mod1 =</span> mod, <span class="at">x =</span> bb1992, <span class="at">rep =</span> <span class="dv">10</span>))</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    user  system elapsed </span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   0.028   0.007   0.515</span></span></code></pre></div>
-<p>In the fortunate situation that a user has more cores, more cores can
-be set by the argument cores. However, note that the function returns an
-error if the number of available cores of the system is lower than the
-number of cores provided by the <code>cores</code> argument (e.g.,
-<code>cores = 4</code>). Of course, multi-core support can be switched
-off by setting the argument <code>multi.core = FALSE</code>.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">system.time</span>(<span class="fu">gen_fit</span>(</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">mod1 =</span> mod,</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> bb1992,</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">rep =</span> <span class="dv">10</span>,</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">multi.core =</span> <span class="cn">FALSE</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    user  system elapsed </span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   0.810   0.072   0.894</span></span></code></pre></div>
+<div id="decision-rules-version-2.0" class="section level3">
+<h3>Decision rules (Version 2.0+)</h3>
+<p>Instead of the recommendation function for older versions, version
+2.0 offers a decision rule overview for the simulated fit values via the
+function flex_co2. As explained in the overview chapter, multiple
+decision rules are provided (FCO1, FCO2, DFI, CP, Fix). The function
+flex_co2 returns a list of dataframes (tibbles) or characters. The first
+one provides the quantiles for the provided arguments of alpha (a-priori
+Type I error, default: .05) and beta (a-priori Type II error, default
+.05 &amp; .10) for each fit index (default: CFI). The quantiles are
+depending on the type of fit index (correct models and GoF: p, correct
+models and BoF: 1-p, misfit models and GoF: 1-p, misfit models and BoF:
+p) and are sorted by index and model type.</p>
+<p>Second, a dataframe is provided that sorts all decision rules (column
+“dec.rule”) by the sum of type I and II errors implied (column
+“SumTypes”) in line with Hu &amp; Bentler (1999). So, the first row
+represents the best decison rule and its cutoff (and fit index) in terms
+of overall error. Some other statistics are also provided (e.g., Power,
+Specificity). Third, a notation is provided assisting users to interpret
+the evaluation. Finally, some important statistics regarding the
+distributions (of each fit index) are returned, the percentage of
+overlap between correct and misspecified models, the AUC (Area under the
+curve) and a U-test (Effect size d). Percentage overlap indicates how
+much the distributions of correct and misspecified models intersect each
+other. A high percentage and a low AUC is indicative of a difficult
+decision, i.e., the given misspecification is hard to detect.
+Alternatively, when overlap percentage is low and AUC is high, the
+cutoffs face a simple decision, i.e., the misspecification is easy to
+detect. Finally, a U-test effect size (Cohens d converted from r)
+provides a non-parametric estimate how distant the expected values from
+both distributions are from each other. Again, a high value indicates a
+small overlap, hence an easy decision for the cutoffs. This function
+does not work with gen_fit.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="co">#Default evaluation:</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="fu">flex_co2</span>(fits)</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="co">#Changed alpha and beta values:</span></span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a><span class="fu">flex_co2</span>(fits, <span class="at">alpha =</span> .<span class="dv">05</span>, <span class="at">beta =</span> .<span class="dv">05</span>)</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="fu">flex_co2</span>(fits, <span class="at">alpha =</span> .<span class="dv">10</span>, <span class="at">beta =</span> .<span class="dv">20</span>)</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a><span class="co">#Different fit indices:</span></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="fu">flex_co2</span>(fits, <span class="at">index =</span> <span class="fu">c</span>(<span class="st">&quot;CFI&quot;</span>, <span class="st">&quot;SRMR&quot;</span>, <span class="st">&quot;RMSEA&quot;</span>))</span></code></pre></div>
 </div>
-<div id="recommendations" class="section level2">
-<h2>Recommendations</h2>
+<div id="plotting-version-2.0" class="section level3">
+<h3>Plotting (Version 2.0+)</h3>
+<p>Function plot_fit2 allows users to inspect the simulated
+distributions of correct and misfit models based on the result from
+gen_fit2 (e.g., fits). This function does not work with gen_fit. The
+distribution of the correct models are depicted in darkblue, the misfit
+models in orange. Vertical lines illustrate the quantiles for both based
+on alpha (darkblue) and beta (orange) values and can be specified by
+changing the alpha (default: .05) and beta (default: .10) arguments.
+Indices can be specified by the argument index, which uses a facet.wrap
+to display distributions for each index.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="co">#Default plot:</span></span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="fu">plot_fit2</span>(fits)</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="co">#Changed alpha and beta values:</span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="fu">plot_fit2</span>(fits, <span class="at">alpha =</span> .<span class="dv">05</span>, <span class="at">beta =</span> .<span class="dv">05</span>)</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="fu">plot_fit2</span>(fits, <span class="at">alpha =</span> .<span class="dv">10</span>, <span class="at">beta =</span> .<span class="dv">20</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="co">#Different fit indices:</span></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="fu">plot_fit2</span>(fits, <span class="at">index =</span> <span class="fu">c</span>(<span class="st">&quot;CFI&quot;</span>, <span class="st">&quot;SRMR&quot;</span>, <span class="st">&quot;RMSEA&quot;</span>))</span></code></pre></div>
+</div>
+</div>
+<div id="older-features-version-2" class="section level2">
+<h2>Older features (Version &lt; 2)</h2>
+<div id="recommendations-version-2" class="section level3">
+<h3>Recommendations (Version &lt; 2)</h3>
 <p>One quintessential issue we notice in many papers, reviews, and PhD
 courses is that non-experts do not know which fit index or fit indicator
 to choose. To summarize, this is the major question one of our papers
 investigates (Mai et al., 2021) and the main message is that one should
-follow a <strong>tailor-fit approach</strong>. Depending on three
-settings, a) <strong>sample size</strong>, b) <strong>research
-purpose</strong> (novel or established model), and c)
-<strong>focus</strong> (confirming a factorial structure, i.e., CFA or
-investigating a theoretical, structural model), different fit indicators
-are recommended.</p>
-<p>The differentiation between <strong>novel</strong> or
-<strong>established</strong> <strong>model</strong> might need some
-explanation. Fit indicators often yield different Type I and II errors.
-When an established model that has been empirically investigated many
-times before (e.g., Theory of Planned Behavior-models) is tested, it
-makes sense to put more weight on Type I error. However, when the model
-has never been tested before, it makes sense to put more weight on the
-Type II error. Since fixed cutoffs show worse hit rates for higher Type
-II error weights (1:3, 1:4), they may be poorly performing for novel
-models.</p>
-<p>We built the function <code>recommend</code> to incorporate this
-tailor-fit approach in a user-friendly way. It requires the simulated
-fit indices and the arguments for <code>purpose</code> and
-<code>focus</code>. Sample size is determined automatically. Results are
-rounded to 3 digits, but can be changed to 1 to 5 digits if needed, for
-example by <code>digits = 5.</code></p>
+follow a tailor-fit approach. Depending on three settings, a) sample
+size, b) research purpose (novel or established model), and c) focus
+(confirming a factorial structure, i.e., CFA or investigating a
+theoretical, structural model), different fit indicators are
+recommended.</p>
+<p>The differentiation between novel or established model might need
+some explanation. Fit indicators often yield different Type I and II
+errors. When an established model that has been empirically investigated
+many times before (e.g., Theory of Planned Behavior-models) is tested,
+it makes sense to put more weight on Type I error. However, when the
+model has never been tested before, it makes sense to put more weight on
+the Type II error. Since fixed cutoffs show worse hit rates for higher
+Type II error weights (1:3, 1:4), they may be poorly performing for
+novel models.</p>
+<p>We built the function recommend to incorporate this tailor-fit
+approach in a user-friendly way. It requires the simulated fit indices
+and the arguments for purpose and focus. Sample size is determined
+automatically. Results are rounded to 3 digits, but can be changed to 1
+to 5 digits if needed, for example by digits = 5.</p>
 <p>Since the most obvious application is to conduct a CFA on a novel
 model, the standard arguments of purpose and focus are set to this
 application. Hence, when we use no further arguments, we get the
 following recommendation:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">recommend</span>(fits.single)</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in recommend(fits.single): The number of replications is lower than the</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; recommended minimum of 500. Consider with care.</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $recommended</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      type fit.values</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; SRMR  BoF      0.038</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $cutoffs</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;               SRMR</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.001 0.037</span></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.01  0.037</span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.05  0.037</span></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.1   0.036</span></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $decisions</span></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                  SRMR</span></span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.001 rejected</span></span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.01  rejected</span></span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.05  rejected</span></span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.1   rejected</span></span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $replications</span></span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $comment</span></span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Recommendations based on flexible cutoffs and Mai et al. (2021)&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">data</span>(bb1992)</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>mod <span class="ot">&lt;-</span> <span class="st">&quot;</span></span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="st">F1 =~ Q5 + Q7 + Q8</span></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="st">F2 =~ Q2 + Q4</span></span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a><span class="st">F3 =~ Q10 + Q11 + Q12 + Q13 + Q18 + Q19 + Q20 + Q21 + Q22</span></span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a><span class="st">F4 =~ Q1 + Q17</span></span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a><span class="st">F5 =~ Q6 + Q14 + Q15 + Q16</span></span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a><span class="st">&quot;</span></span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>fits.single <span class="ot">&lt;-</span> <span class="fu">gen_fit</span>(<span class="at">mod1 =</span> mod, <span class="at">x =</span> bb1992, <span class="at">rep =</span> <span class="dv">100</span>)</span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a><span class="fu">recommend</span>(fits.single)</span></code></pre></div>
 <p>SRMR is recommended due to the purpose, focus, and sample size (n =
 502) in line with the recommendations by Mai et al. (2021). Hence, the
 lone fit indicator we need to report is SRMR. The function also returns
-the type of the fit indicator, which is guessed from
-<code>index_guess</code> and the actual value of the SRMR in the
-model.</p>
+the type of the fit indicator, which is guessed from index_guess and the
+actual value of the SRMR in the model.</p>
 <p>Additionally, the function provides a sensitivity analysis for
 different values of uncertainty, .001 (.1 percent), .01 (1 percent), .05
 (5 percent) and .10 (10 percent) and makes a decision given the cutoff.
@@ -922,16 +847,7 @@ the model can be confirmed.</p>
 exploratory as they were and simply looked for confirmation of an
 established measurement model. So, we change the purpose argument to
 established.</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">recommend</span>(fits.single, <span class="at">purpose =</span> <span class="st">&quot;established&quot;</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $recommended</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     type fit.values</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; CFI  GoF       0.96</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $decisions</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;confirmed&quot;</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $comment</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Recommendations based on fixed cutoffs and Mai et al. (2021)&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">recommend</span>(fits.single, <span class="at">purpose =</span> <span class="st">&quot;established&quot;</span>)</span></code></pre></div>
 <p>Now the recommendation changes to CFI with a fixed cutoff.
 Consequently, no uncertainty is provided (as they are fixed) and the
 recommendation is to confirm the model because the actual value (.960)
@@ -946,40 +862,10 @@ words, we feigned to be very certain by assuming the model to be an
 established model (ignoring the doubts) and hence got a very determined
 answer.</p>
 <p>Finally, for exploratory investigations, one can also override the
-recommendations programmed into the function by using the
-<code>override</code> argument. This however requires users to provide
-one or more indices with the argument <code>index</code> (otherwise, an
-error is returned).</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">recommend</span>(fits.single,</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">override =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">index =</span> <span class="fu">c</span>(<span class="st">&quot;CFI&quot;</span>, <span class="st">&quot;SRMR&quot;</span>))</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in recommend(fits.single, override = TRUE, index = c(&quot;CFI&quot;, &quot;SRMR&quot;)):</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; The number of replications is lower than the recommended minimum of 500.</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Consider with care.</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $recommended</span></span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;      type fit.values</span></span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; CFI   GoF      0.960</span></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; SRMR  BoF      0.038</span></span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $cutoffs</span></span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                CFI  SRMR</span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.001 0.978 0.037</span></span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.01  0.978 0.037</span></span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.05  0.978 0.037</span></span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.1   0.980 0.036</span></span>
-<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $decisions</span></span>
-<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                   CFI     SRMR</span></span>
-<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.001 rejected rejected</span></span>
-<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.01  rejected rejected</span></span>
-<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.05  rejected rejected</span></span>
-<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.1   rejected rejected</span></span>
-<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $replications</span></span>
-<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
-<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $comment</span></span>
-<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Override mode&quot;</span></span></code></pre></div>
+recommendations programmed into the function by using the override
+argument. This however requires users to provide one or more indices
+with the argument index (otherwise, an error is returned).</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="fu">recommend</span>(fits.single, <span class="at">override =</span> <span class="cn">TRUE</span>, <span class="at">index =</span> <span class="fu">c</span>(<span class="st">&quot;CFI&quot;</span>, <span class="st">&quot;SRMR&quot;</span>))</span></code></pre></div>
 <p>In the example, we provide CFI and SRMR and get the appropriate
 recommendations for them. Unsurprisingly, the recommendations do not
 change much (SRMR is confirmed for levels of .001 and .01 uncertainty
@@ -987,79 +873,43 @@ for 100 replications, otherwise the model is rejected). Please note that
 purpose and focus are without function in this case, as the
 recommendations by Mai et al. (2021) are overridden.</p>
 </div>
-</div>
-<div id="further-applications" class="section level1">
-<h1>Further applications</h1>
-<div id="relative-fit-comparison" class="section level2">
-<h2>Relative fit comparison</h2>
-<p>A popular feature in CBSEM is to <strong>compare nested
-models</strong>, for example testing some type of invariance between
-groups, comparing alternative theoretical models or discriminant
-validity testing (see next chapter for the latter). So far, we allow
-users to incorporate a second model by specifying the <code>mod2</code>
-argument in function <code>gen_fit</code>. In this case, the resulting
-fits from function are not vectors in a list of the length of
-replications, but a matrix with two rows. Function <code>flex_co</code>
-then produces a slightly different output displaying the flexible
-cutoffs for both models as well as the difference between the two
-models.</p>
+<div id="relative-fit-comparison-version-2" class="section level3">
+<h3>Relative fit comparison (Version &lt; 2)</h3>
+<p>A popular feature in CBSEM is to compare nested models, for example
+testing some type of invariance between groups, comparing alternative
+theoretical models or discriminant validity testing (see next chapter
+for the latter). So far, we allow users to incorporate a second model by
+specifying the mod2 argument in function gen_fit. In this case, the
+resulting fits from function are not vectors in a list of the length of
+replications, but a matrix with two rows. Function flex_co then produces
+a slightly different output displaying the flexible cutoffs for both
+models as well as the difference between the two models.</p>
 <p>Let us assume that the first two factors F1 and F2 might be
 orthogonal (independent). Hence, we constrain the factor correlation
-between both to zero (<code>F1 ~~ 0 * F2</code>).</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">subset</span>(<span class="fu">parameterestimates</span>(res, <span class="at">standardized =</span> T), lhs <span class="sc">==</span> <span class="st">&quot;F1&quot;</span> <span class="sc">&amp;</span></span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>         rhs <span class="sc">==</span> <span class="st">&quot;F2&quot;</span>)</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    lhs op rhs   est    se     z pvalue ci.lower ci.upper std.lv std.all std.nox</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 46  F1 ~~  F2 0.217 0.038 5.736      0    0.143    0.291   0.36    0.36    0.36</span></span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>mod.con <span class="ot">&lt;-</span> <span class="st">&quot;</span></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="st">F1 =~ Q5 + Q7 + Q8</span></span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="st">F2 =~ Q2 + Q4</span></span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="st">F3 =~ Q10 + Q11 + Q12 + Q13 + Q18 + Q19 + Q20 + Q21 + Q22</span></span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="st">F4 =~ Q1 + Q17</span></span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="st">F5 =~ Q6 + Q14 + Q15 + Q16</span></span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="st">F1 ~~ 0 * F2</span></span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span></span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>fits.con <span class="ot">&lt;-</span> <span class="fu">gen_fit</span>(</span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">mod1 =</span> mod,</span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">mod2 =</span> mod.con,</span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> bb1992,</span>
-<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">rep =</span> <span class="dv">10</span></span>
-<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a><span class="fu">flex_co</span>(<span class="at">fits =</span> fits.con,</span>
-<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">index =</span> <span class="fu">c</span>(<span class="st">&quot;CFI&quot;</span>, <span class="st">&quot;SRMR&quot;</span>),</span>
-<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>        <span class="at">alpha.lev =</span> .<span class="dv">05</span>)</span>
-<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in flex_co(fits = fits.con, index = c(&quot;CFI&quot;, &quot;SRMR&quot;), alpha.lev =</span></span>
-<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.05): The number of replications is lower than the recommended minimum of 500.</span></span>
-<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Consider with care.</span></span>
-<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $cutoff</span></span>
-<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;               CFI       SRMR</span></span>
-<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Model 1 0.9808747 0.03280321</span></span>
-<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Model 2 0.9640482 0.05264764</span></span>
-<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $difference</span></span>
-<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;         CFI        SRMR </span></span>
-<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  0.01682647 -0.01984443 </span></span>
-<span id="cb17-33"><a href="#cb17-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb17-34"><a href="#cb17-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $index</span></span>
-<span id="cb17-35"><a href="#cb17-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;CFI&quot;  &quot;SRMR&quot;</span></span>
-<span id="cb17-36"><a href="#cb17-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb17-37"><a href="#cb17-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $alpha</span></span>
-<span id="cb17-38"><a href="#cb17-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.05</span></span>
-<span id="cb17-39"><a href="#cb17-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb17-40"><a href="#cb17-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $gof</span></span>
-<span id="cb17-41"><a href="#cb17-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   CFI  SRMR </span></span>
-<span id="cb17-42"><a href="#cb17-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  TRUE FALSE </span></span>
-<span id="cb17-43"><a href="#cb17-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb17-44"><a href="#cb17-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $replications</span></span>
-<span id="cb17-45"><a href="#cb17-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
-<span id="cb17-46"><a href="#cb17-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb17-47"><a href="#cb17-47" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`number of non-converging models`</span></span>
-<span id="cb17-48"><a href="#cb17-48" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb17-49"><a href="#cb17-49" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb17-50"><a href="#cb17-50" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`share of non-converging models`</span></span>
-<span id="cb17-51"><a href="#cb17-51" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb17-52"><a href="#cb17-52" aria-hidden="true" tabindex="-1"></a><span class="fu">fitmeasures</span>(res, <span class="at">fit.measures =</span> <span class="fu">c</span>(<span class="st">&quot;cfi&quot;</span>, <span class="st">&quot;srmr&quot;</span>)) <span class="sc">-</span> <span class="fu">fitmeasures</span>(<span class="fu">cfa</span>(<span class="at">model =</span> mod.con, <span class="at">data =</span> bb1992), <span class="at">fit.measures =</span> <span class="fu">c</span>(<span class="st">&quot;cfi&quot;</span>, <span class="st">&quot;srmr&quot;</span>))</span>
-<span id="cb17-53"><a href="#cb17-53" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    cfi   srmr </span></span>
-<span id="cb17-54"><a href="#cb17-54" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  0.011 -0.037</span></span></code></pre></div>
+between both to zero (F1 ~~ 0 * F2).</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="fu">data</span>(bb1992)</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>mod <span class="ot">&lt;-</span> <span class="st">&quot;</span></span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a><span class="st">F1 =~ Q5 + Q7 + Q8</span></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a><span class="st">F2 =~ Q2 + Q4</span></span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a><span class="st">F3 =~ Q10 + Q11 + Q12 + Q13 + Q18 + Q19 + Q20 + Q21 + Q22</span></span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a><span class="st">F4 =~ Q1 + Q17</span></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a><span class="st">F5 =~ Q6 + Q14 + Q15 + Q16</span></span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a><span class="st">&quot;</span></span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a></span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a>mod.con <span class="ot">&lt;-</span> <span class="st">&quot;</span></span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a><span class="st">F1 =~ Q5 + Q7 + Q8</span></span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a><span class="st">F2 =~ Q2 + Q4</span></span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a><span class="st">F3 =~ Q10 + Q11 + Q12 + Q13 + Q18 + Q19 + Q20 + Q21 + Q22</span></span>
+<span id="cb22-14"><a href="#cb22-14" tabindex="-1"></a><span class="st">F4 =~ Q1 + Q17</span></span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1"></a><span class="st">F5 =~ Q6 + Q14 + Q15 + Q16</span></span>
+<span id="cb22-16"><a href="#cb22-16" tabindex="-1"></a><span class="st">F1 ~~ 0 * F2</span></span>
+<span id="cb22-17"><a href="#cb22-17" tabindex="-1"></a><span class="st">&quot;</span> </span>
+<span id="cb22-18"><a href="#cb22-18" tabindex="-1"></a></span>
+<span id="cb22-19"><a href="#cb22-19" tabindex="-1"></a>fits.con <span class="ot">&lt;-</span> <span class="fu">gen_fit</span>(<span class="at">mod1 =</span> mod, <span class="at">mod2 =</span> mod.con, <span class="at">x =</span> bb1992, <span class="at">rep =</span> <span class="dv">100</span>) </span>
+<span id="cb22-20"><a href="#cb22-20" tabindex="-1"></a></span>
+<span id="cb22-21"><a href="#cb22-21" tabindex="-1"></a><span class="fu">flex_co</span>(<span class="at">fits =</span> fits.con, <span class="at">index =</span> <span class="fu">c</span>(<span class="st">&quot;CFI&quot;</span>, <span class="st">&quot;SRMR&quot;</span>), <span class="at">alpha.lev =</span> .<span class="dv">05</span>) </span>
+<span id="cb22-22"><a href="#cb22-22" tabindex="-1"></a></span>
+<span id="cb22-23"><a href="#cb22-23" tabindex="-1"></a><span class="fu">fitmeasures</span>(<span class="fu">cfa</span>(<span class="at">model =</span> mod, <span class="at">data =</span> bb1992), <span class="at">fit.measures =</span> <span class="fu">c</span>(<span class="st">&quot;cfi&quot;</span>, <span class="st">&quot;srmr&quot;</span>)) <span class="sc">-</span> <span class="fu">fitmeasures</span>(<span class="fu">cfa</span>(<span class="at">model =</span> mod.con, <span class="at">data =</span> bb1992), <span class="at">fit.measures =</span> <span class="fu">c</span>(<span class="st">&quot;cfi&quot;</span>, <span class="st">&quot;srmr&quot;</span>))</span></code></pre></div>
 <p>Since the correlation between both factors was only .36, it is likely
 that the models show a comparable fit. Indeed, the flexible cutoffs are
 slightly worsened in the constrained model 2 (CFI = .956, SRMR = .056)
@@ -1081,57 +931,21 @@ the performance of flexible cutoffs for relative fit comparisons might
 be interesting.</p>
 <p>As a technical side note, the flexible cutoffs here are slightly
 different from the ones described in chapter “Basic usage” since the
-<code>type</code> argument is automatically switched to “EM”
-(<code>type = &quot;EM&quot;</code>) when two models are provided. When single
-cutoffs would be generated with this setting, the same flexible cutoffs
-would be found.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>fits.proof <span class="ot">&lt;-</span> <span class="fu">gen_fit</span>(</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">mod1 =</span> mod,</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> bb1992,</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">rep =</span> <span class="dv">10</span>,</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">&quot;EM&quot;</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="fu">flex_co</span>(<span class="at">fits =</span> fits.proof,</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">index =</span> <span class="fu">c</span>(<span class="st">&quot;CFI&quot;</span>, <span class="st">&quot;SRMR&quot;</span>),</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">alpha.lev =</span> .<span class="dv">05</span>)</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in flex_co(fits = fits.proof, index = c(&quot;CFI&quot;, &quot;SRMR&quot;), alpha.lev =</span></span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.05): The number of replications is lower than the recommended minimum of 500.</span></span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Consider with care.</span></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $cutoff</span></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        CFI       SRMR </span></span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.98087471 0.03280321 </span></span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $index</span></span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;CFI&quot;  &quot;SRMR&quot;</span></span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $alpha</span></span>
-<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.05</span></span>
-<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $gof</span></span>
-<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   CFI  SRMR </span></span>
-<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  TRUE FALSE </span></span>
-<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $replications</span></span>
-<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
-<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`number of non-converging models`</span></span>
-<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`share of non-converging models`</span></span>
-<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span></code></pre></div>
+type argument is automatically switched to “EM” (type = “EM”) when two
+models are provided. When single cutoffs would be generated with this
+setting, the same flexible cutoffs would be found.</p>
 </div>
-<div id="discriminant-validity-testing" class="section level2">
-<h2>Discriminant validity testing</h2>
+<div id="discriminant-validity-testing-version-2" class="section level3">
+<h3>Discriminant validity testing (Version &lt; 2)</h3>
 <p>A special application of flexible cutoffs could be its ability to
-test <strong>discriminant validity</strong>. As Rönkkö &amp; Cho (2020)
-highlighted, CBSEM could be useful to compare CFAs where a second
-alternative model merges, hereafter “<strong>merging</strong>”, two
-factors subject to an issue in discriminant validity (given a
-substantially high correlation between the factors). Alternatively, it
-is possible to compare an unconstrained model with a constrained model,
-where the correlation between the factors is set to a cutoff value
-(e.g., .9). We refer to this second principle as
-“<strong>constraining</strong>”. Instead of testing the chi-square
+test discriminant validity. As Rönkkö &amp; Cho (2022) highlighted,
+CBSEM could be useful to compare CFAs where a second alternative model
+merges, hereafter “merging”, two factors subject to an issue in
+discriminant validity (given a substantially high correlation between
+the factors). Alternatively, it is possible to compare an unconstrained
+model with a constrained model, where the correlation between the
+factors is set to a cutoff value (e.g., .9). We refer to this second
+principle as “constraining”. Instead of testing the chi-square
 difference between the original and the alternative model, flexible
 cutoffs for fit indicators might work equally well or even better, given
 the issues with the chi-square statistic (e.g., Niemand &amp; Mai
@@ -1139,268 +953,97 @@ the issues with the chi-square statistic (e.g., Niemand &amp; Mai
 <p>Consider that in the example data, factors F4 and F5 are highly
 correlated (.831), possibly indicating an issue in discriminant
 validity. To investigate this, we can use the discriminant
-validity-related arguments of the <code>gen_fit</code> function, termed
-<code>dv</code>, <code>dv.factors</code>, <code>merge.mod</code>, and
-<code>dv.cutoff</code>. Argument <code>dv</code> simply tells the
+validity-related arguments of the gen_fit function, termed dv,
+dv.factors, merge.mod, and dv.cutoff. Argument dv simply tells the
 function to expect the application of discriminant validity testing.
-Argument <code>dv.factors</code> provides the factors that should be
-investigated, in this case F4 and F5. If this argument is missing, it is
-assumed that the first and second factor of the model should be
-investigated (F1 &amp; F2). Hence, one should provide the names of the
-factors if that is not the case. Argument <code>merge.mod</code> is
-needed if <strong>merging</strong> should be applied. This argument
-calls an internal function that takes the original model, changes all
-indicators of the second factor (F5) specified under
-<code>dv.factors</code> to be indicators of the first factor (F4), and
-omits the second factor from estimation. Please note that it does not
-matter which factor is first or second, as both are merged anyway.
-Finally, <code>dv.cutoff</code> is required when one wants to apply
-<strong>constraining</strong>. The value for this cutoff can be between
-0 and 1, but a warning is given if it is lower than .8, as this is
-generally accepted as the lower border of a discriminant validity issue
-(Rönkkö &amp; Cho 2020, p. 30). Some guessing work is implemented here
-to make the arguments more convenient. For example, if one forgot the
-argument <code>dv</code> but sets <code>merge.mod = TRUE</code>, merging
-is still assumed. To make sure the user knows which approach is used, a
+Argument dv.factors provides the factors that should be investigated, in
+this case F4 and F5. If this argument is missing, it is assumed that the
+first and second factor of the model should be investigated (F1 &amp;
+F2). Hence, one should provide the names of the factors if that is not
+the case. Argument merge.mod is needed if merging should be applied.
+This argument calls an internal function that takes the original model,
+changes all indicators of the second factor (F5) specified under
+dv.factors to be indicators of the first factor (F4), and omits the
+second factor from estimation. Please note that it does not matter which
+factor is first or second, as both are merged anyway. Finally, dv.cutoff
+is required when one wants to apply constraining. The value for this
+cutoff can be between 0 and 1, but a warning is given if it is lower
+than .8, as this is generally accepted as the lower border of a
+discriminant validity issue (Rönkkö &amp; Cho 2022). Some guessing work
+is implemented here to make the arguments more convenient. For example,
+if one forgot the argument dv but sets merge.mod = TRUE, merging is
+still assumed. To make sure the user knows which approach is used, a
 message indicating the discriminant validity testing approach is
 returned.</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">subset</span>(<span class="fu">parameterestimates</span>(res, <span class="at">standardized =</span> <span class="cn">TRUE</span>), lhs <span class="sc">==</span> <span class="st">&quot;F4&quot;</span> <span class="sc">&amp;</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>         rhs <span class="sc">==</span> <span class="st">&quot;F5&quot;</span>)</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    lhs op rhs   est    se     z pvalue ci.lower ci.upper std.lv std.all std.nox</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 55  F4 ~~  F5 0.398 0.042 9.417      0    0.316    0.481  0.831   0.831   0.831</span></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>fits.dv.con <span class="ot">&lt;-</span> <span class="fu">gen_fit</span>(</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">mod1 =</span> mod,</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> bb1992,</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">rep =</span> <span class="dv">10</span>,</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">dv =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">dv.factors =</span> <span class="fu">c</span>(<span class="st">&quot;F4&quot;</span>, <span class="st">&quot;F5&quot;</span>),</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">dv.cutoff =</span> .<span class="dv">9</span></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Constraining is selected as the discriminant validity testing option given the provided arguments.</span></span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>fits.dv.merge <span class="ot">&lt;-</span> <span class="fu">gen_fit</span>(</span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">mod1 =</span> mod,</span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> bb1992,</span>
-<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">rep =</span> <span class="dv">10</span>,</span>
-<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">dv =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">dv.factors =</span> <span class="fu">c</span>(<span class="st">&quot;F4&quot;</span>, <span class="st">&quot;F5&quot;</span>),</span>
-<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">merge.mod =</span> <span class="cn">TRUE</span></span>
-<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Merging is selected as the discriminant validity testing option given the provided arguments.</span></span>
-<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a><span class="fu">flex_co</span>(<span class="at">fits =</span> fits.dv.con,</span>
-<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>        <span class="at">index =</span> <span class="st">&quot;CFI&quot;</span>,</span>
-<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>        <span class="at">alpha.lev =</span> .<span class="dv">05</span>)</span>
-<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in flex_co(fits = fits.dv.con, index = &quot;CFI&quot;, alpha.lev = 0.05): The</span></span>
-<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; number of replications is lower than the recommended minimum of 500. Consider</span></span>
-<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; with care.</span></span>
-<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $cutoff</span></span>
-<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;               CFI</span></span>
-<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Model 1 0.9808747</span></span>
-<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Model 2 0.9805963</span></span>
-<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $difference</span></span>
-<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.0002783622</span></span>
-<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $index</span></span>
-<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;CFI&quot;</span></span>
-<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $alpha</span></span>
-<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.05</span></span>
-<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $gof</span></span>
-<span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  CFI </span></span>
-<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; TRUE </span></span>
-<span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $replications</span></span>
-<span id="cb19-49"><a href="#cb19-49" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
-<span id="cb19-50"><a href="#cb19-50" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`number of non-converging models`</span></span>
-<span id="cb19-52"><a href="#cb19-52" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb19-53"><a href="#cb19-53" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb19-54"><a href="#cb19-54" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`share of non-converging models`</span></span>
-<span id="cb19-55"><a href="#cb19-55" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb19-56"><a href="#cb19-56" aria-hidden="true" tabindex="-1"></a><span class="fu">flex_co</span>(<span class="at">fits =</span> fits.dv.merge,</span>
-<span id="cb19-57"><a href="#cb19-57" aria-hidden="true" tabindex="-1"></a>        <span class="at">index =</span> <span class="st">&quot;CFI&quot;</span>,</span>
-<span id="cb19-58"><a href="#cb19-58" aria-hidden="true" tabindex="-1"></a>        <span class="at">alpha.lev =</span> .<span class="dv">05</span>)</span>
-<span id="cb19-59"><a href="#cb19-59" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in flex_co(fits = fits.dv.merge, index = &quot;CFI&quot;, alpha.lev = 0.05): The</span></span>
-<span id="cb19-60"><a href="#cb19-60" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; number of replications is lower than the recommended minimum of 500. Consider</span></span>
-<span id="cb19-61"><a href="#cb19-61" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; with care.</span></span>
-<span id="cb19-62"><a href="#cb19-62" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $cutoff</span></span>
-<span id="cb19-63"><a href="#cb19-63" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;               CFI</span></span>
-<span id="cb19-64"><a href="#cb19-64" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Model 1 0.9808747</span></span>
-<span id="cb19-65"><a href="#cb19-65" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Model 2 0.9428451</span></span>
-<span id="cb19-66"><a href="#cb19-66" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb19-67"><a href="#cb19-67" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $difference</span></span>
-<span id="cb19-68"><a href="#cb19-68" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.03802959</span></span>
-<span id="cb19-69"><a href="#cb19-69" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb19-70"><a href="#cb19-70" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $index</span></span>
-<span id="cb19-71"><a href="#cb19-71" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;CFI&quot;</span></span>
-<span id="cb19-72"><a href="#cb19-72" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb19-73"><a href="#cb19-73" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $alpha</span></span>
-<span id="cb19-74"><a href="#cb19-74" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.05</span></span>
-<span id="cb19-75"><a href="#cb19-75" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb19-76"><a href="#cb19-76" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $gof</span></span>
-<span id="cb19-77"><a href="#cb19-77" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  CFI </span></span>
-<span id="cb19-78"><a href="#cb19-78" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; TRUE </span></span>
-<span id="cb19-79"><a href="#cb19-79" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb19-80"><a href="#cb19-80" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $replications</span></span>
-<span id="cb19-81"><a href="#cb19-81" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
-<span id="cb19-82"><a href="#cb19-82" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb19-83"><a href="#cb19-83" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`number of non-converging models`</span></span>
-<span id="cb19-84"><a href="#cb19-84" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb19-85"><a href="#cb19-85" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb19-86"><a href="#cb19-86" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $`share of non-converging models`</span></span>
-<span id="cb19-87"><a href="#cb19-87" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0</span></span>
-<span id="cb19-88"><a href="#cb19-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-89"><a href="#cb19-89" aria-hidden="true" tabindex="-1"></a>mod.dv.con <span class="ot">&lt;-</span> <span class="st">&quot;</span></span>
-<span id="cb19-90"><a href="#cb19-90" aria-hidden="true" tabindex="-1"></a><span class="st">F1 =~ Q5 + Q7 + Q8</span></span>
-<span id="cb19-91"><a href="#cb19-91" aria-hidden="true" tabindex="-1"></a><span class="st">F2 =~ Q2 + Q4</span></span>
-<span id="cb19-92"><a href="#cb19-92" aria-hidden="true" tabindex="-1"></a><span class="st">F3 =~ Q10 + Q11 + Q12 + Q13 + Q18 + Q19 + Q20 + Q21 + Q22</span></span>
-<span id="cb19-93"><a href="#cb19-93" aria-hidden="true" tabindex="-1"></a><span class="st">F4 =~ Q1 + Q17</span></span>
-<span id="cb19-94"><a href="#cb19-94" aria-hidden="true" tabindex="-1"></a><span class="st">F5 =~ Q6 + Q14 + Q15 + Q16</span></span>
-<span id="cb19-95"><a href="#cb19-95" aria-hidden="true" tabindex="-1"></a><span class="st">F4 ~~ .9 * F5</span></span>
-<span id="cb19-96"><a href="#cb19-96" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span></span>
-<span id="cb19-97"><a href="#cb19-97" aria-hidden="true" tabindex="-1"></a><span class="fu">fitmeasures</span>(</span>
-<span id="cb19-98"><a href="#cb19-98" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cfa</span>(</span>
-<span id="cb19-99"><a href="#cb19-99" aria-hidden="true" tabindex="-1"></a>    <span class="at">model =</span> mod.dv.con,</span>
-<span id="cb19-100"><a href="#cb19-100" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> bb1992,</span>
-<span id="cb19-101"><a href="#cb19-101" aria-hidden="true" tabindex="-1"></a>    <span class="at">auto.fix.first =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb19-102"><a href="#cb19-102" aria-hidden="true" tabindex="-1"></a>    <span class="at">std.lv =</span> <span class="cn">TRUE</span></span>
-<span id="cb19-103"><a href="#cb19-103" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb19-104"><a href="#cb19-104" aria-hidden="true" tabindex="-1"></a>  <span class="at">fit.measures =</span> <span class="st">&quot;cfi&quot;</span></span>
-<span id="cb19-105"><a href="#cb19-105" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb19-106"><a href="#cb19-106" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   cfi </span></span>
-<span id="cb19-107"><a href="#cb19-107" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.959</span></span>
-<span id="cb19-108"><a href="#cb19-108" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-109"><a href="#cb19-109" aria-hidden="true" tabindex="-1"></a>mod.dv.merge <span class="ot">&lt;-</span> <span class="st">&quot;</span></span>
-<span id="cb19-110"><a href="#cb19-110" aria-hidden="true" tabindex="-1"></a><span class="st">F1 =~ Q5 + Q7 + Q8</span></span>
-<span id="cb19-111"><a href="#cb19-111" aria-hidden="true" tabindex="-1"></a><span class="st">F2 =~ Q2 + Q4</span></span>
-<span id="cb19-112"><a href="#cb19-112" aria-hidden="true" tabindex="-1"></a><span class="st">F3 =~ Q10 + Q11 + Q12 + Q13 + Q18 + Q19 + Q20 + Q21 + Q22</span></span>
-<span id="cb19-113"><a href="#cb19-113" aria-hidden="true" tabindex="-1"></a><span class="st">F4 =~ Q1 + Q17 + Q6 + Q14 + Q15 + Q16</span></span>
-<span id="cb19-114"><a href="#cb19-114" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span></span>
-<span id="cb19-115"><a href="#cb19-115" aria-hidden="true" tabindex="-1"></a><span class="fu">fitmeasures</span>(</span>
-<span id="cb19-116"><a href="#cb19-116" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cfa</span>(</span>
-<span id="cb19-117"><a href="#cb19-117" aria-hidden="true" tabindex="-1"></a>    <span class="at">model =</span> mod.dv.merge,</span>
-<span id="cb19-118"><a href="#cb19-118" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> bb1992</span>
-<span id="cb19-119"><a href="#cb19-119" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb19-120"><a href="#cb19-120" aria-hidden="true" tabindex="-1"></a>  <span class="at">fit.measures =</span> <span class="st">&quot;cfi&quot;</span></span>
-<span id="cb19-121"><a href="#cb19-121" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb19-122"><a href="#cb19-122" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   cfi </span></span>
-<span id="cb19-123"><a href="#cb19-123" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 0.952</span></span></code></pre></div>
-<p>In this example, we asked for discriminant validity testing
-(<code>dv = TRUE</code>) and ran constraining first, constraining the
-correlation between the provided factors
-(<code>dv.factors = c(&quot;F4&quot;, &quot;F5&quot;)</code>) to the cutoff of .9
-(<code>dv.cutoff = .9</code>). Second, we ran merging, this time telling
-the function to merge both selected factors
-(<code>merge.mod = TRUE</code>).</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="fu">data</span>(bb1992)</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>mod <span class="ot">&lt;-</span> <span class="st">&quot;</span></span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a><span class="st">F1 =~ Q5 + Q7 + Q8</span></span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a><span class="st">F2 =~ Q2 + Q4</span></span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a><span class="st">F3 =~ Q10 + Q11 + Q12 + Q13 + Q18 + Q19 + Q20 + Q21 + Q22</span></span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a><span class="st">F4 =~ Q1 + Q17</span></span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a><span class="st">F5 =~ Q6 + Q14 + Q15 + Q16</span></span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a><span class="st">&quot;</span></span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a></span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a>fits.dv.con <span class="ot">&lt;-</span> <span class="fu">gen_fit</span>(<span class="at">mod1 =</span> mod, <span class="at">x =</span> bb1992, <span class="at">rep =</span> <span class="dv">100</span>, <span class="at">dv =</span> <span class="cn">TRUE</span>, <span class="at">dv.factors =</span> <span class="fu">c</span>(<span class="st">&quot;F4&quot;</span>, <span class="st">&quot;F5&quot;</span>), <span class="at">dv.cutoff =</span> .<span class="dv">9</span>) </span>
+<span id="cb23-11"><a href="#cb23-11" tabindex="-1"></a></span>
+<span id="cb23-12"><a href="#cb23-12" tabindex="-1"></a>fits.dv.merge <span class="ot">&lt;-</span> <span class="fu">gen_fit</span>(<span class="at">mod1 =</span> mod, <span class="at">x =</span> bb1992, <span class="at">rep =</span> <span class="dv">100</span>, <span class="at">dv =</span> <span class="cn">TRUE</span>, <span class="at">dv.factors =</span> <span class="fu">c</span>(<span class="st">&quot;F4&quot;</span>, <span class="st">&quot;F5&quot;</span>), <span class="at">merge.mod =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb23-13"><a href="#cb23-13" tabindex="-1"></a></span>
+<span id="cb23-14"><a href="#cb23-14" tabindex="-1"></a><span class="fu">flex_co</span>(<span class="at">fits =</span> fits.dv.con, <span class="at">index =</span> <span class="st">&quot;CFI&quot;</span>, <span class="at">alpha.lev =</span> .<span class="dv">05</span>) </span>
+<span id="cb23-15"><a href="#cb23-15" tabindex="-1"></a><span class="fu">flex_co</span>(<span class="at">fits =</span> fits.dv.merge, <span class="at">index =</span> <span class="st">&quot;CFI&quot;</span>, <span class="at">alpha.lev =</span> .<span class="dv">05</span>)</span>
+<span id="cb23-16"><a href="#cb23-16" tabindex="-1"></a></span>
+<span id="cb23-17"><a href="#cb23-17" tabindex="-1"></a>mod.dv.con <span class="ot">&lt;-</span> <span class="st">&quot;</span></span>
+<span id="cb23-18"><a href="#cb23-18" tabindex="-1"></a><span class="st">F1 =~ Q5 + Q7 + Q8</span></span>
+<span id="cb23-19"><a href="#cb23-19" tabindex="-1"></a><span class="st">F2 =~ Q2 + Q4</span></span>
+<span id="cb23-20"><a href="#cb23-20" tabindex="-1"></a><span class="st">F3 =~ Q10 + Q11 + Q12 + Q13 + Q18 + Q19 + Q20 + Q21 + Q22</span></span>
+<span id="cb23-21"><a href="#cb23-21" tabindex="-1"></a><span class="st">F4 =~ Q1 + Q17</span></span>
+<span id="cb23-22"><a href="#cb23-22" tabindex="-1"></a><span class="st">F5 =~ Q6 + Q14 + Q15 + Q16</span></span>
+<span id="cb23-23"><a href="#cb23-23" tabindex="-1"></a><span class="st">F4 ~~ .9 * F5</span></span>
+<span id="cb23-24"><a href="#cb23-24" tabindex="-1"></a><span class="st">&quot;</span> </span>
+<span id="cb23-25"><a href="#cb23-25" tabindex="-1"></a></span>
+<span id="cb23-26"><a href="#cb23-26" tabindex="-1"></a><span class="fu">fitmeasures</span>(<span class="fu">cfa</span>(<span class="at">model =</span> mod.dv.con, <span class="at">data =</span> bb1992, <span class="at">auto.fix.first =</span> <span class="cn">FALSE</span>, <span class="at">std.lv =</span> <span class="cn">TRUE</span>), <span class="at">fit.measures =</span> <span class="st">&quot;cfi&quot;</span>)</span>
+<span id="cb23-27"><a href="#cb23-27" tabindex="-1"></a></span>
+<span id="cb23-28"><a href="#cb23-28" tabindex="-1"></a>mod.dv.merge <span class="ot">&lt;-</span> <span class="st">&quot;</span></span>
+<span id="cb23-29"><a href="#cb23-29" tabindex="-1"></a><span class="st">F1 =~ Q5 + Q7 + Q8</span></span>
+<span id="cb23-30"><a href="#cb23-30" tabindex="-1"></a><span class="st">F2 =~ Q2 + Q4</span></span>
+<span id="cb23-31"><a href="#cb23-31" tabindex="-1"></a><span class="st">F3 =~ Q10 + Q11 + Q12 + Q13 + Q18 + Q19 + Q20 + Q21 + Q22</span></span>
+<span id="cb23-32"><a href="#cb23-32" tabindex="-1"></a><span class="st">F4 =~ Q1 + Q17 + Q6 + Q14 + Q15 + Q16</span></span>
+<span id="cb23-33"><a href="#cb23-33" tabindex="-1"></a><span class="st">&quot;</span> </span>
+<span id="cb23-34"><a href="#cb23-34" tabindex="-1"></a></span>
+<span id="cb23-35"><a href="#cb23-35" tabindex="-1"></a><span class="fu">fitmeasures</span>(<span class="fu">cfa</span>(<span class="at">model =</span> mod.dv.merge, <span class="at">data =</span> bb1992), <span class="at">fit.measures =</span> <span class="st">&quot;cfi&quot;</span>)</span></code></pre></div>
+<p>In this example, we asked for discriminant validity testing (dv =
+TRUE) and ran constraining first, constraining the correlation between
+the provided factors (dv.factors = c(“F4”, “F5”)) to the cutoff of .9
+(dv.cutoff = .9). Second, we ran merging, this time telling the function
+to merge both selected factors (merge.mod = TRUE).</p>
 <p>Similar to the relative fit comparison case, the function returns
-tables for each replication, which then can be handled by the
-<code>flex_co</code> function. There are multiple options for how to
-assess discriminant validity subject to further investigations. As a
-<strong>simple test</strong>, we apply the following logic here
-(essentially a variant of a chi-squared difference test only with CFI):
-If two factors are clearly discriminant, their correlation is low,
-yielding a worse fit for the <strong>constrained</strong> or
-<strong>merged</strong> model compared to the <strong>original</strong>
-(unconstrained, not merged) model. This implies that the a GoF index,
-such as CFI, is smaller than the cutoff of the correct model (e.g., .75
-&lt; .95). In contrast, a BoF index, such as SRMR, would indicate
-discriminant validity if it is larger than the respective cutoff of the
-correct model (e.g., .15 &gt; .05). In this example, the CFI for
-constraining is .959, while cutoffs for the correct model (model 1) are
-.969. In a nutshell, the CFI of the constrained model is out of the
-range of simulated CFIs for correct models (in this case, outside of 95%
-of all CFIs simulated). For merging, the same picture is found. CFI is
-.952, which is well below the cutoff of .969. Multiple other options are
-plausible, but we leave the point here.</p>
+tables for each replication, which then can be handled by the flex_co
+function. There are multiple options for how to assess discriminant
+validity subject to further investigations. As a simple test, we apply
+the following logic here (essentially a variant of a chi-squared
+difference test only with CFI): If two factors are clearly discriminant,
+their correlation is low, yielding a worse fit for the constrained or
+merged model compared to the original (unconstrained, not merged) model.
+This implies that the a GoF index, such as CFI, is smaller than the
+cutoff of the correct model (e.g., .75 &lt; .95). In contrast, a BoF
+index, such as SRMR, would indicate discriminant validity if it is
+larger than the respective cutoff of the correct model (e.g., .15 &gt;
+.05). In this example, the CFI for constraining is .959, while cutoffs
+for the correct model (model 1) are .969. In a nutshell, the CFI of the
+constrained model is out of the range of simulated CFIs for correct
+models (in this case, outside of 95% of all CFIs simulated). For
+merging, the same picture is found. CFI is .952, which is well below the
+cutoff of .969. Multiple other options are plausible, but we leave the
+point here.</p>
 <p>Since the code to obtain these values is rather extensive and hence
 to make user’s work easier, we provide a recommendation function
-<code>recommend_dv</code> that incorporates the previously described
-considerations. As with the <code>recommend</code> function for single
-fit indicators, it requires a result from <code>gen_fit</code> with
-appropriate arguments and, optionally, names of the fit indices (CFI is
-used if not provided). Results are rounded to 3 digits, but can be
-changed to 1 to 5 digits if needed, for example by
-<code>digits = 5.</code></p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">recommend_dv</span>(fits.dv.con)</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in recommend_dv(fits.dv.con): The number of replications is lower than</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; the recommended minimum of 500. Consider with care.</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $cutoffs</span></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     CFI       model alpha</span></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 0.981    original 0.001</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 0.981 constrained 0.001</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 0.981    original 0.010</span></span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 0.981 constrained 0.010</span></span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 0.981    original 0.050</span></span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6 0.981 constrained 0.050</span></span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7 0.982    original 0.100</span></span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 8 0.982 constrained 0.100</span></span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $fit.values</span></span>
-<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     CFI       model</span></span>
-<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 0.960    original</span></span>
-<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 0.959 constrained</span></span>
-<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $differences</span></span>
-<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                CFI</span></span>
-<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.001 0.000</span></span>
-<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.01  0.000</span></span>
-<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.05  0.000</span></span>
-<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.1   0.000</span></span>
-<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; fit          0.001</span></span>
-<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $decisions</span></span>
-<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                    CFI</span></span>
-<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.001 confirmed</span></span>
-<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.01  confirmed</span></span>
-<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.05  confirmed</span></span>
-<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.1   confirmed</span></span>
-<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $replications</span></span>
-<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
-<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $comment</span></span>
-<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Approach for discriminant validity testing: constraining. Discriminant validity is confirmed if the fit value from the constrained/merged model is smaller (GoF) / larger (BoF) than the respective cutoff of original model.&quot;</span></span>
-<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a><span class="fu">recommend_dv</span>(fits.dv.merge)</span>
-<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in recommend_dv(fits.dv.merge): The number of replications is lower</span></span>
-<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; than the recommended minimum of 500. Consider with care.</span></span>
-<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $cutoffs</span></span>
-<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     CFI    model alpha</span></span>
-<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 0.981 original 0.001</span></span>
-<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 0.943   merged 0.001</span></span>
-<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 0.981 original 0.010</span></span>
-<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 0.943   merged 0.010</span></span>
-<span id="cb20-49"><a href="#cb20-49" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 0.981 original 0.050</span></span>
-<span id="cb20-50"><a href="#cb20-50" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6 0.943   merged 0.050</span></span>
-<span id="cb20-51"><a href="#cb20-51" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7 0.982 original 0.100</span></span>
-<span id="cb20-52"><a href="#cb20-52" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 8 0.944   merged 0.100</span></span>
-<span id="cb20-53"><a href="#cb20-53" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb20-54"><a href="#cb20-54" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $fit.values</span></span>
-<span id="cb20-55"><a href="#cb20-55" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     CFI    model</span></span>
-<span id="cb20-56"><a href="#cb20-56" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1 0.960 original</span></span>
-<span id="cb20-57"><a href="#cb20-57" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2 0.952   merged</span></span>
-<span id="cb20-58"><a href="#cb20-58" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb20-59"><a href="#cb20-59" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $differences</span></span>
-<span id="cb20-60"><a href="#cb20-60" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                CFI</span></span>
-<span id="cb20-61"><a href="#cb20-61" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.001 0.038</span></span>
-<span id="cb20-62"><a href="#cb20-62" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.01  0.038</span></span>
-<span id="cb20-63"><a href="#cb20-63" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.05  0.038</span></span>
-<span id="cb20-64"><a href="#cb20-64" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.1   0.038</span></span>
-<span id="cb20-65"><a href="#cb20-65" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; fit          0.008</span></span>
-<span id="cb20-66"><a href="#cb20-66" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb20-67"><a href="#cb20-67" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $decisions</span></span>
-<span id="cb20-68"><a href="#cb20-68" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;                    CFI</span></span>
-<span id="cb20-69"><a href="#cb20-69" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.001 confirmed</span></span>
-<span id="cb20-70"><a href="#cb20-70" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.01  confirmed</span></span>
-<span id="cb20-71"><a href="#cb20-71" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.05  confirmed</span></span>
-<span id="cb20-72"><a href="#cb20-72" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cutoff 0.1   confirmed</span></span>
-<span id="cb20-73"><a href="#cb20-73" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb20-74"><a href="#cb20-74" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $replications</span></span>
-<span id="cb20-75"><a href="#cb20-75" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
-<span id="cb20-76"><a href="#cb20-76" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb20-77"><a href="#cb20-77" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $comment</span></span>
-<span id="cb20-78"><a href="#cb20-78" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;Approach for discriminant validity testing: merging. Discriminant validity is confirmed if the fit value from the constrained/merged model is smaller (GoF) / larger (BoF) than the respective cutoff of original model.&quot;</span></span></code></pre></div>
+recommend_dv that incorporates the previously described considerations.
+As with the recommend function for single fit indicators, it requires a
+result from gen_fit with appropriate arguments and, optionally, names of
+the fit indices (CFI is used if not provided). Results are rounded to 3
+digits, but can be changed to 1 to 5 digits if needed, for example by
+digits = 5.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="fu">recommend_dv</span>(fits.dv.con) </span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="fu">recommend_dv</span>(fits.dv.merge)</span></code></pre></div>
 <p>The function returns the cutoffs for different levels of alpha and
 the two models, where the first model is the original model and the
 second model is termed constrained or merged based on the approach
@@ -1411,13 +1054,19 @@ different alpha values are provided as well. Finally, the number of
 replications as well as a comment highlighting the approach and an
 interpretation of the decision basis (the simple test) are given. Please
 note that the decisions are identical to the ones made by Rönkkö &amp;
-Cho’s tool in <code>semTools::discriminantValidity</code>.</p>
-</div>
-</div>
-<div id="references" class="section level1">
-<h1>References</h1>
+Cho’s tool in semTools::discriminantValidity.</p>
+<p>## References</p>
 <p>Babakus, E., &amp; Boller, G. W. (1992). An empirical assessment of
 the SERVQUAL scale. Journal of Business Research, 24(3), 253–268. <a href="https://doi.org/10.1016/0148-2963(92)90022-4" class="uri">https://doi.org/10.1016/0148-2963(92)90022-4</a></p>
+<p>Cohen, J. (1988). Statistical power analysis for the behavioral
+sciences. Lawrence Erlbaum. <a href="https://doi.org/10.4324/9780203771587" class="uri">https://doi.org/10.4324/9780203771587</a></p>
+<p>Groskurth, K., Bhaktha, N., &amp; Lechner, C. M. (2025). The
+simulation-cum-ROC approach: A new approach to generate tailored cutoffs
+for fit indices through simulation and ROC analysis. Behavior Research
+Methods, 57(5), Article 135. <a href="https://doi.org/10.3758/s13428-025-02638-x" class="uri">https://doi.org/10.3758/s13428-025-02638-x</a></p>
+<p>Hayes, A. F. (2017). Introduction to mediation, moderation, and
+conditional process analysis: A regression-based approach (2nd ed.). The
+Guilford Press.</p>
 <p>Hu, L., &amp; Bentler, P. M. (1999). Cutoff criteria for fit indexes
 in covariance structure analysis: Conventional criteria versus new
 alternatives. Structural Equation Modeling, 6(1), 1–55. <a href="https://doi.org/10.1080/10705519909540118" class="uri">https://doi.org/10.1080/10705519909540118</a></p>
@@ -1425,16 +1074,20 @@ alternatives. Structural Equation Modeling, 6(1), 1–55. <a href="https://doi.o
 Evaluation Strategy for Better Decisions about Structural Equation
 Models. Technological Forecasting &amp; Social Change, 173(December)
 121142. <a href="https://doi.org/10.1016/j.techfore.2021.121142" class="uri">https://doi.org/10.1016/j.techfore.2021.121142</a></p>
+<p>McNeish, D., &amp; Wolf, M. G. (2023). Dynamic fit index cutoffs for
+confirmatory factor analysis models. Psychological Methods, 28(1),
+61–88. <a href="https://doi.org/10.1037/met0000425" class="uri">https://doi.org/10.1037/met0000425</a></p>
 <p>Meade, A. W., Johnson, E. C., &amp; Braddy, P. W. (2008). Power and
 sensitivity of alternative fit indices in tests of measurement
-invariance. Journal of Applied Psychology, 93(3), 568-592. <a href="https://psycnet.apa.org/doi/10.1037/0021-9010.93.3.568">https://doi.org/10.1037/0021-9010.93.3.568</a></p>
+invariance. Journal of Applied Psychology, 93(3), 568-592. <a href="https://doi.org/10.1037/0021-9010.93.3.568" class="uri">https://doi.org/10.1037/0021-9010.93.3.568</a></p>
 <p>Niemand, T., &amp; Mai, R. (2018). Flexible cutoff values for fit
 indices in the evaluation of structural equation models. Journal of the
 Academy of Marketing Science, 46(6), 1148—1172. <a href="https://doi.org/10.1007/s11747-018-0602-9" class="uri">https://doi.org/10.1007/s11747-018-0602-9</a></p>
-<p>Rönkkö, M., &amp; Cho, E. (2020). An updated guideline for assessing
-discriminant validity. Organizational Research Methods. <a href="https://doi.org/10.1177/1094428120968614" class="uri">https://doi.org/10.1177/1094428120968614</a><br />
-</p>
-<p>Comment: V12042022</p>
+<p>Rönkkö, M., &amp; Cho, E. (2022). An Updated Guideline for Assessing
+Discriminant Validity. Organizational Research Methods, 25(1), 6–14. <a href="https://doi.org/10.1177/1094428120968614" class="uri">https://doi.org/10.1177/1094428120968614</a></p>
+<p>Comment: V09052025</p>
+</div>
+</div>
 </div>
 
 
