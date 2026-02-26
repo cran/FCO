@@ -1,7 +1,7 @@
 Package: FCO
 Title: Flexible Cutoffs for Model Fit Evaluation in Covariance-Based
         Structural Models
-Version: 2.0.1
+Version: 2.0.2
 Authors@R: c(
     person("Thomas", "Niemand", , "thomas.niemand@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-7677-1168")),
@@ -46,6 +46,6 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3
 NeedsCompilation: no
-Packaged: 2026-02-12 14:27:35 UTC; thomasniemand
+Packaged: 2026-02-25 16:23:28 UTC; thomasniemand
 Repository: CRAN
-Date/Publication: 2026-02-13 20:30:02 UTC
+Date/Publication: 2026-02-26 06:10:48 UTC

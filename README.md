@@ -5,11 +5,16 @@
 
 ## Changes in FCO
 
-### FCO 2.0.1
+### FCO 2.0.2
 
-* Skewness and kurtosis now estimated by an internal function as semTools may be archived.
+- Small changes to solve CRAN check errors on some platforms.
 
 ------------------------------------------------------------------------
+
+### FCO 2.0.1
+
+- Skewness and kurtosis now estimated by an internal function as
+  semTools may be archived.
 
 ### FCO 2.0.0
 
